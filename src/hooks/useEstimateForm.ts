@@ -11,11 +11,6 @@ export interface EstimateFormData {
   message: string;
 }
 
-interface LeadResponse {
-  id: string;
-  [key: string]: unknown;
-}
-
 interface ErrorResponse {
   message?: string;
   [key: string]: unknown;
@@ -47,7 +42,8 @@ export function useEstimateForm(): UseEstimateFormReturn {
         const errorData = (await res.json().catch(() => ({}))) as ErrorResponse;
         throw new Error(errorData.message || 'Failed to submit estimate request');
       }
-      const lead = (await res.json()) as LeadResponse;
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+      const lead = (await res.json()) as { id: string };
       trackEstimateRequested(lead.id, data.serviceType);
       return { success: true, lead: { id: lead.id } };
     } catch (e) {

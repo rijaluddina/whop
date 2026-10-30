@@ -1,6 +1,7 @@
 // src/components/forms/EstimateForm.tsx
 import { useState } from 'react';
 import { useEstimateForm, EstimateFormData } from '../../hooks/useEstimateForm';
+import { serviceOptions } from '../../lib/config/services';
 import {
   Button,
   Input,
@@ -11,16 +12,7 @@ import {
   CardTitle,
   CardDescription,
   CardFooter,
-  SelectOption,
 } from '../ui';
-
-const serviceOptions: SelectOption[] = [
-  { value: 'repair', label: 'Roof Repair' },
-  { value: 'replacement', label: 'Roof Replacement' },
-  { value: 'inspection', label: 'Roof Inspection' },
-  { value: 'emergency', label: 'Emergency Service' },
-  { value: 'other', label: 'Other / Not Sure' },
-];
 
 const initialFormData: EstimateFormData = {
   name: '',

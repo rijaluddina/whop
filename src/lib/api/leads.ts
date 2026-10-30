@@ -2,10 +2,10 @@
 import { getWhopClient } from '@/lib/whop-client';
 import { EstimateFormData } from '@/hooks/useEstimateForm';
 
-export async function createLead(data: EstimateFormData) {
+export async function createLead(data: EstimateFormData, accountId: string) {
   const client = getWhopClient();
   const lead = await client.leads.create({
-    account_id: process.env.WHOP_ACCOUNT_ID!,
+    account_id: accountId,
     metadata: {
       email: data.email,
       name: data.name,
