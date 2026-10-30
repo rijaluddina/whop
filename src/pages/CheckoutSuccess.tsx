@@ -50,11 +50,11 @@ function CheckoutSuccessPage() {
                   </svg>
                 </div>
                 <h1 className="text-3xl md:text-4xl font-bold text-[var(--color-foreground)] mb-4">
-                  {isSetupIntent ? 'Payment Method Saved' : 'Payment Successful'}
+                  {isSetupIntent ? 'Card Saved for Final Payment' : 'Payment Successful'}
                 </h1>
                 <p className="text-lg text-[var(--color-muted-foreground)]">
                   {isSetupIntent
-                    ? 'Your payment method has been securely saved for the project deposit.'
+                    ? 'Your payment method has been securely saved. The deposit is applied and the final balance will be charged upon project completion.'
                     : 'Your payment has been processed successfully.'}
                 </p>
               </div>
@@ -95,7 +95,7 @@ function CheckoutSuccessPage() {
               <div className="mt-8 text-sm text-[var(--color-muted-foreground)]">
                 <p>
                   {isSetupIntent
-                    ? "Your project deposit is secured. We'll reach out shortly to schedule your project."
+                    ? "Your card is saved for the final payment. We'll reach out shortly to schedule your project."
                     : "A confirmation email has been sent. We'll be in touch soon to discuss next steps."}
                 </p>
               </div>

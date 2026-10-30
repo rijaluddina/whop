@@ -4,6 +4,7 @@ import { Hero, Services, ServiceArea, Financing, Reviews, Contact } from './comp
 import { WhopPixelEvents } from './components/tracking';
 import CheckoutPage from './pages/Checkout';
 import CheckoutSuccessPage from './pages/CheckoutSuccess';
+import InvoicePaymentPage from './pages/InvoicePayment';
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
           />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
+          <Route path="/invoice/payment" element={<InvoicePaymentPage />} />
         </Routes>
       </main>
       <Footer />
