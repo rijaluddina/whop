@@ -1,5 +1,8 @@
 {
   "name": "apex-roofing",
   "type": "website",
-  "route": "apex-roofing"
+  "route": "apex-roofing",
+  "buildCommand": "npm run build",
+  "outputDir": "dist",
+  "framework": "vite"
 }
