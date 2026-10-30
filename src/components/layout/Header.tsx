@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { companyConfig } from '../../lib/config/company';
 import { Navigation } from './Navigation';
 
+const SCROLL_THRESHOLD = 20;
+
 export interface HeaderProps {
   className?: string;
 }
@@ -12,7 +14,7 @@ export const Header = ({ className }: HeaderProps) => {
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
+      setIsScrolled(window.scrollY > SCROLL_THRESHOLD);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -23,6 +25,19 @@ export const Header = ({ className }: HeaderProps) => {
 
   const handleNavClick = () => {
     setIsMobileMenuOpen(false);
+  };
+
+  const getLogoAbbreviation = (name: string): string => {
+    const words = name.trim().split(/\s+/);
+    if (words.length === 1) {
+      // For single-word names, use first 2-3 characters
+      return name.slice(0, 3).toUpperCase();
+    }
+    // For multi-word names, use first letter of each word
+    return words
+      .map((w) => w[0])
+      .join('')
+      .toUpperCase();
   };
 
   return (
@@ -68,10 +83,7 @@ export const Header = ({ className }: HeaderProps) => {
                   {companyConfig.name}
                 </span>
                 <span className="text-lg font-bold text-[var(--color-primary)] sm:hidden">
-                  {companyConfig.name
-                    .split(' ')
-                    .map((w) => w[0])
-                    .join('')}
+                  {getLogoAbbreviation(companyConfig.name)}
                 </span>
               </a>
             </div>
@@ -137,13 +149,13 @@ export const Header = ({ className }: HeaderProps) => {
             <Navigation className="flex flex-col space-x-0 space-y-1" onNavClick={handleNavClick} />
             <div className="pt-4 border-t border-[var(--color-border)] flex flex-col space-y-3">
               <a
-                href="tel:{companyConfig.phone}"
+                href={`tel:${companyConfig.phone}`}
                 className="px-4 py-3 text-base font-medium text-[var(--color-primary)] bg-[var(--color-primary)]/10 rounded-lg text-center hover:bg-[var(--color-primary)]/20 transition-colors"
               >
                 Call {companyConfig.phone}
               </a>
               <a
-                href="mailto:{companyConfig.email}"
+                href={`mailto:${companyConfig.email}`}
                 className="px-4 py-3 text-base font-medium text-white bg-[var(--color-primary)] rounded-lg text-center hover:bg-[var(--color-primary)]/90 transition-colors"
               >
                 Email Us

@@ -37,6 +37,56 @@ export const companyConfig = {
     },
   ],
   trustBadges: ['Licensed & Insured', 'BBB A+ Rating', '500+ Projects', '10-Year Warranty'],
+  socialLinks: [
+    {
+      label: 'Facebook',
+      href: 'https://facebook.com/apexroofing',
+      icon: 'facebook',
+    },
+    {
+      label: 'Twitter',
+      href: 'https://twitter.com/apexroofing',
+      icon: 'twitter',
+    },
+    {
+      label: 'Instagram',
+      href: 'https://instagram.com/apexroofing',
+      icon: 'instagram',
+    },
+    {
+      label: 'LinkedIn',
+      href: 'https://linkedin.com/company/apexroofing',
+      icon: 'linkedin',
+    },
+    {
+      label: 'Google Reviews',
+      href: 'https://google.com/search?q=apex+roofing+reviews',
+      icon: 'google',
+    },
+  ],
+  footerLinks: {
+    services: [
+      { label: 'Residential Roofing', href: '#services' },
+      { label: 'Commercial Roofing', href: '#services' },
+      { label: 'Roof Repair', href: '#services' },
+      { label: 'Roof Inspection', href: '#services' },
+      { label: 'Emergency Services', href: '#contact' },
+    ],
+    company: [
+      { label: 'About Us', href: '#about' },
+      { label: 'Our Team', href: '#about' },
+      { label: 'Careers', href: '#contact' },
+      { label: 'Blog', href: '#contact' },
+      { label: 'FAQ', href: '#contact' },
+    ],
+    support: [
+      { label: 'Contact Us', href: '#contact' },
+      { label: 'Request a Quote', href: '#contact' },
+      { label: 'Schedule Inspection', href: '#contact' },
+      { label: 'Financing Options', href: '#contact' },
+      { label: 'Warranty Info', href: '#contact' },
+    ],
+  },
 } as const;
 
 export type CompanyConfig = typeof companyConfig;
