@@ -6,8 +6,14 @@ import { useEffect, useRef, useState } from 'react';
  */
 export function useWhopPixelStatus(): 'loading' | 'ready' | 'error' {
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const statusRef = useRef(status);
   const pollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const overallTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Keep statusRef in sync with status state
+  useEffect(() => {
+    statusRef.current = status;
+  }, [status]);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -26,7 +32,7 @@ export function useWhopPixelStatus(): 'loading' | 'ready' | 'error' {
     checkPixel();
 
     overallTimeoutRef.current = setTimeout(() => {
-      if (status === 'loading') {
+      if (statusRef.current === 'loading') {
         setStatus('error');
       }
     }, 10_000);
@@ -39,7 +45,6 @@ export function useWhopPixelStatus(): 'loading' | 'ready' | 'error' {
         clearTimeout(overallTimeoutRef.current);
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return status;
