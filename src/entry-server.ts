@@ -47,9 +47,20 @@ async function handleLeadsPost(request: Request, env: Env): Promise<Response> {
 }
 
 async function handleSetupIntentsFinalize(request: Request): Promise<Response> {
+  // Validate HTTP method
+  if (request.method !== 'POST') {
+    return new Response(JSON.stringify({ message: 'Method not allowed' }), {
+      status: 405,
+      headers: { 'Content-Type': 'application/json', Allow: 'POST' },
+    });
+  }
+
   try {
     const rawData = await request.json();
-    const { setup_intent_id } = rawData as { setup_intent_id: string };
+    const { setup_intent_id, customer_email } = rawData as {
+      setup_intent_id: string;
+      customer_email?: string;
+    };
 
     if (!setup_intent_id) {
       return new Response(JSON.stringify({ message: 'Missing setup_intent_id' }), {
@@ -58,7 +69,14 @@ async function handleSetupIntentsFinalize(request: Request): Promise<Response> {
       });
     }
 
-    const setupIntent = await finalizeSetupIntent(setup_intent_id);
+    if (!customer_email) {
+      return new Response(JSON.stringify({ message: 'Missing customer_email' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const setupIntent = await finalizeSetupIntent(setup_intent_id, customer_email);
 
     return new Response(JSON.stringify({ setupIntent }), {
       status: 200,

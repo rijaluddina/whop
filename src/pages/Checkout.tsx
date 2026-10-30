@@ -5,12 +5,15 @@ import { plans, type PlanKey } from '@/lib/config/plans';
 import { Container, Section } from '@/components/ui';
 import { Header, Footer } from '@/components/layout';
 
+// Type guard for PlanKey
+const isValidPlan = (key: string): key is PlanKey => key in plans;
+
 function CheckoutPage() {
   const [searchParams] = useSearchParams();
-  const planKey = searchParams.get('plan') as PlanKey | null;
+  const planKey = searchParams.get('plan');
 
-  // Validate plan key
-  if (!planKey || !plans[planKey]) {
+  // Validate plan key using type guard
+  if (!planKey || !isValidPlan(planKey)) {
     return (
       <div className="min-h-screen bg-[var(--color-background)] flex items-center justify-center">
         <div className="text-center p-8">

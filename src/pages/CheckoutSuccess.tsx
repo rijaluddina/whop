@@ -11,6 +11,7 @@ import {
   Badge,
 } from '@/components/ui';
 import { Header, Footer } from '@/components/layout';
+import { plans, type PlanKey } from '@/lib/config/plans';
 
 function CheckoutSuccessPage() {
   const [searchParams] = useSearchParams();
@@ -21,13 +22,8 @@ function CheckoutSuccessPage() {
   const isSetupIntent = !!setupIntentId;
   const referenceId = paymentId || setupIntentId;
 
-  const planNames: Record<string, string> = {
-    inspection: 'Roof Inspection',
-    deposit: 'Project Deposit',
-    flatRate: 'Standard Roof Replacement',
-  };
-
-  const planName = plan ? planNames[plan] : 'Service';
+  const planKey = plan as PlanKey | null;
+  const planName = planKey && plans[planKey] ? plans[planKey].name : 'Service';
 
   return (
     <div className="min-h-screen bg-[var(--color-background)]">
