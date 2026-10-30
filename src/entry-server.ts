@@ -1,6 +1,7 @@
 // src/entry-server.ts
 // Cloudflare Worker entry point for API routes
 import { createLead } from './lib/api/leads';
+import { finalizeSetupIntent } from './lib/api/setup-intents';
 import type { EstimateFormData } from './hooks/useEstimateForm';
 
 interface Env {
@@ -45,12 +46,43 @@ async function handleLeadsPost(request: Request, env: Env): Promise<Response> {
   }
 }
 
+async function handleSetupIntentsFinalize(request: Request): Promise<Response> {
+  try {
+    const rawData = await request.json();
+    const { setup_intent_id } = rawData as { setup_intent_id: string };
+
+    if (!setup_intent_id) {
+      return new Response(JSON.stringify({ message: 'Missing setup_intent_id' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const setupIntent = await finalizeSetupIntent(setup_intent_id);
+
+    return new Response(JSON.stringify({ setupIntent }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (error) {
+    console.error('Setup intent finalize error:', error);
+    return new Response(JSON.stringify({ message: 'Failed to finalize setup intent' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+}
+
 async function handleRequest(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
 
   // API routes
   if (url.pathname === '/api/leads' && request.method === 'POST') {
     return handleLeadsPost(request, env);
+  }
+
+  if (url.pathname === '/api/setup-intents/finalize' && request.method === 'POST') {
+    return handleSetupIntentsFinalize(request);
   }
 
   // For all other routes, serve the SPA (handled by Cloudflare Workers static assets)
