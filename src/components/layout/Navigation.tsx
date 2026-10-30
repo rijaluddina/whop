@@ -10,6 +10,15 @@ export interface NavigationProps {
 const DEFAULT_SCROLL_OFFSET = 100;
 const SCROLL_THROTTLE_MS = 16; // ~60fps
 
+// Derive nav items from sections prop (excluding 'home' which is typically the hero/logo link)
+const getNavItems = (sections: string[]) =>
+  sections
+    .filter((section) => section !== 'home')
+    .map((id) => ({
+      id,
+      label: id.charAt(0).toUpperCase() + id.slice(1),
+    }));
+
 export const Navigation = ({
   className,
   onNavClick,
@@ -20,7 +29,12 @@ export const Navigation = ({
   const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isScrollingRef = useRef(false);
 
+  const navItems = getNavItems(sections);
+
   const updateActiveSection = useCallback(() => {
+    // Skip updating active section during programmatic smooth scroll to prevent flicker
+    if (isScrollingRef.current) return;
+
     const scrollPosition = window.scrollY + scrollOffset;
 
     for (const section of sections) {
@@ -36,6 +50,8 @@ export const Navigation = ({
   }, [sections, scrollOffset]);
 
   const throttledUpdateActiveSection = useCallback(() => {
+    // Don't throttle/update during programmatic scroll
+    if (isScrollingRef.current) return;
     if (scrollTimeoutRef.current) return;
     scrollTimeoutRef.current = setTimeout(() => {
       updateActiveSection();
@@ -89,13 +105,6 @@ export const Navigation = ({
     },
     [onNavClick]
   );
-
-  const navItems = [
-    { id: 'services', label: 'Services' },
-    { id: 'about', label: 'About' },
-    { id: 'reviews', label: 'Reviews' },
-    { id: 'contact', label: 'Contact' },
-  ];
 
   return (
     <nav
