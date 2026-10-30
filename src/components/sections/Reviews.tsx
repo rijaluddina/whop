@@ -222,34 +222,36 @@ export const Reviews = () => {
             ))}
           </div>
 
-          {/* Google Reviews CTA */}
-          <div className="text-center mt-10">
-            <a
-              href={companyConfig.socialLinks.find((s) => s.icon === 'google')?.href || '#'}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-white border-2 border-[var(--color-border)] text-gray-700 font-medium hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
-            >
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M21 7h-2v4h2c1.1 0 2 .9 2 2v4c0 1.1-.9 2-2 2h-4v2h4c2.21 0 4-1.79 4-4V9c0-2.21-1.79-4-4-4zm-4 6h2v-2h-2v2zm4-6H9c-2.21 0-4 1.79-4 4v10c0 2.21 1.79 4 4 4h12c2.21 0 4-1.79 4-4V9c0-2.21-1.79-4-4-4z" />
-              </svg>
-              <span>Read All Google Reviews</span>
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
+          {/* Google Reviews CTA - only show if Google link is configured */}
+          {companyConfig.socialLinks.find((s) => s.icon === 'google') && (
+            <div className="text-center mt-10">
+              <a
+                href={companyConfig.socialLinks.find((s) => s.icon === 'google')!.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-white border-2 border-[var(--color-border)] text-gray-700 font-medium hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
-            </a>
-          </div>
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M21 7h-2v4h2c1.1 0 2 .9 2 2v4c0 1.1-.9 2-2 2h-4v2h4c2.21 0 4-1.79 4-4V9c0-2.21-1.79-4-4-4zm-4 6h2v-2h-2v2zm4-6H9c-2.21 0-4 1.79-4 4v10c0 2.21 1.79 4 4 4h12c2.21 0 4-1.79 4-4V9c0-2.21-1.79-4-4-4z" />
+                </svg>
+                <span>Read All Google Reviews</span>
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              </a>
+            </div>
+          )}
         </div>
       </Container>
     </Section>

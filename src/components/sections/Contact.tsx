@@ -1,14 +1,6 @@
 import { useState } from 'react';
+import { companyConfig } from '../../lib/config/company';
 import { trackingEvents, generateEventId } from '../../lib/config/tracking';
-
-// Whop tracking type augmentation
-declare global {
-  interface Window {
-    whop?: {
-      track: (eventName: string, data: Record<string, unknown>) => void;
-    };
-  }
-}
 
 import {
   Section,
@@ -82,7 +74,11 @@ export const Contact = () => {
 
     if (!formData.phone.trim()) {
       newErrors.phone = 'Phone number is required';
-    } else if (!/^[\d\s\-()+]{10,}$/.test(formData.phone.replace(/\s/g, ''))) {
+    } else if (
+      !/^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/.test(
+        formData.phone.replace(/\s/g, '')
+      )
+    ) {
       newErrors.phone = 'Please enter a valid phone number';
     }
 
@@ -124,7 +120,9 @@ export const Contact = () => {
       });
 
       if (!response.ok) {
-        const errorData = (await response.json().catch(() => ({}))) as { message?: string };
+        const errorData = (await response.json().catch(() => ({}))) as {
+          message?: string;
+        };
         throw new Error(errorData.message || 'Failed to submit estimate request');
       }
 
@@ -164,6 +162,79 @@ export const Contact = () => {
     }
   };
 
+  // Contact info from companyConfig
+  const contactInfo = [
+    {
+      icon: (
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+          />
+        </svg>
+      ),
+      label: 'Phone',
+      value: companyConfig.phone,
+      href: `tel:${companyConfig.phone}`,
+    },
+    {
+      icon: (
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+          />
+        </svg>
+      ),
+      label: 'Email',
+      value: companyConfig.email,
+      href: `mailto:${companyConfig.email}`,
+    },
+    {
+      icon: (
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+          />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+          />
+        </svg>
+      ),
+      label: 'Address',
+      value: companyConfig.address,
+      href: '#',
+    },
+  ];
+
   return (
     <Section id="contact" variant="alternate" size="xl">
       <Container size="lg">
@@ -183,77 +254,7 @@ export const Contact = () => {
 
             {/* Contact Info Cards */}
             <div className="space-y-4 mb-8">
-              {[
-                {
-                  icon: (
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      aria-hidden="true"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                      />
-                    </svg>
-                  ),
-                  label: 'Phone',
-                  value: '(555) 123-4567',
-                  href: 'tel:(555) 123-4567',
-                },
-                {
-                  icon: (
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      aria-hidden="true"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                      />
-                    </svg>
-                  ),
-                  label: 'Email',
-                  value: 'info@apexroofing.com',
-                  href: 'mailto:info@apexroofing.com',
-                },
-                {
-                  icon: (
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      aria-hidden="true"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                    </svg>
-                  ),
-                  label: 'Address',
-                  value: '123 Main St, Springfield, IL 62701',
-                  href: '#',
-                },
-              ].map((item, index) => (
+              {contactInfo.map((item, index) => (
                 <div
                   key={index}
                   className="flex items-start gap-4 p-4 rounded-xl bg-white border border-[var(--color-border)] hover:border-[var(--color-primary)]/50 transition-colors"
@@ -274,31 +275,29 @@ export const Contact = () => {
               ))}
             </div>
 
-            {/* Trust Indicators */}
+            {/* Trust Indicators from companyConfig */}
             <div className="pt-6 border-t border-[var(--color-border)]">
               <h3 className="font-semibold text-gray-900 mb-4">Why Choose Us?</h3>
               <div className="grid grid-cols-2 gap-3">
-                {['Licensed & Insured', 'BBB A+ Rating', '10-Year Warranty', 'Free Estimates'].map(
-                  (item, index) => (
-                    <div key={index} className="flex items-center gap-2 text-sm text-gray-700">
-                      <svg
-                        className="w-5 h-5 text-[var(--color-success)] flex-shrink-0"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        aria-hidden="true"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                      <span>{item}</span>
-                    </div>
-                  )
-                )}
+                {companyConfig.trustBadges.map((item, index) => (
+                  <div key={index} className="flex items-center gap-2 text-sm text-gray-700">
+                    <svg
+                      className="w-5 h-5 text-[var(--color-success)] flex-shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                    <span>{item}</span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>

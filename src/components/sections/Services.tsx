@@ -1,14 +1,6 @@
 import { plans } from '../../lib/config/plans';
 import { trackingEvents, generateEventId } from '../../lib/config/tracking';
-
-// Whop tracking type augmentation
-declare global {
-  interface Window {
-    whop?: {
-      track: (eventName: string, data: Record<string, unknown>) => void;
-    };
-  }
-}
+import { navigateToCheckout, scrollToContact } from '../../lib/utils/navigation';
 
 import {
   Button,
@@ -126,23 +118,14 @@ const ServiceCard = ({
   );
 };
 
-export const Services = () => {
-  const handleInspectionClick = () => {
-    // Navigate to checkout page for inspection
-    window.location.href = `/checkout?plan=inspection`;
-  };
+// Derive service data from plans config
+// This ensures price/description/features stay in sync with the single source of truth
+const createServiceData = () => {
+  const repairPlan = plans.deposit;
+  const replacementPlan = plans.flatRate;
+  const inspectionPlan = plans.inspection;
 
-  const handleDepositClick = () => {
-    // Navigate to checkout page for deposit
-    window.location.href = `/checkout?plan=deposit`;
-  };
-
-  const handleReplacementClick = () => {
-    // Navigate to checkout page for flat rate
-    window.location.href = `/checkout?plan=flatRate`;
-  };
-
-  const services = [
+  return [
     {
       id: 'repair',
       title: 'Roof Repair',
@@ -156,7 +139,7 @@ export const Services = () => {
         'Emergency tarping available',
         'Workmanship warranty included',
       ],
-      price: 89900, // $899 starting price
+      price: repairPlan.price, // From plans config
       planKey: 'deposit' as const,
       icon: (
         <svg
@@ -174,7 +157,7 @@ export const Services = () => {
           />
         </svg>
       ),
-      onClick: handleDepositClick,
+      onClick: () => navigateToCheckout('deposit'),
     },
     {
       id: 'replacement',
@@ -189,7 +172,7 @@ export const Services = () => {
         '10-year workmanship warranty',
         'Manufacturer warranty registration',
       ],
-      price: 250000, // $2,500
+      price: replacementPlan.price, // From plans config
       planKey: 'flatRate' as const,
       icon: (
         <svg
@@ -213,7 +196,7 @@ export const Services = () => {
           />
         </svg>
       ),
-      onClick: handleReplacementClick,
+      onClick: () => navigateToCheckout('flatRate'),
     },
     {
       id: 'inspection',
@@ -228,7 +211,7 @@ export const Services = () => {
         'Maintenance recommendations',
         'Free with any repair job',
       ],
-      price: 14900, // $149
+      price: inspectionPlan.price, // From plans config
       planKey: 'inspection' as const,
       icon: (
         <svg
@@ -246,9 +229,13 @@ export const Services = () => {
           />
         </svg>
       ),
-      onClick: handleInspectionClick,
+      onClick: () => navigateToCheckout('inspection'),
     },
   ];
+};
+
+export const Services = () => {
+  const services = createServiceData();
 
   return (
     <Section id="services" variant="alternate" size="xl">
@@ -279,7 +266,7 @@ export const Services = () => {
           <p className="text-gray-600 mb-4">
             Not sure which service you need? Let us assess your roof at no obligation.
           </p>
-          <Button variant="outline" size="lg" onClick={handleInspectionClick}>
+          <Button variant="outline" size="lg" onClick={() => scrollToContact('inspection')}>
             Schedule Free Inspection
           </Button>
         </div>

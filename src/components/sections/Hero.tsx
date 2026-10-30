@@ -1,36 +1,14 @@
 import { companyConfig } from '../../lib/config/company';
 import { Button, Section, Badge, Container } from '../ui';
+import { scrollToContact } from '../../lib/utils/navigation';
 
-export interface HeroProps {
-  onGetEstimate?: () => void;
-  onScheduleInspection?: () => void;
-}
-
-export const Hero = ({ onGetEstimate, onScheduleInspection }: HeroProps) => {
+export const Hero = () => {
   const handleGetEstimate = () => {
-    onGetEstimate?.();
-    // Scroll to contact section
-    const contactSection = document.getElementById('contact');
-    if (contactSection) {
-      contactSection.scrollIntoView({ behavior: 'smooth' });
-    }
+    scrollToContact();
   };
 
   const handleScheduleInspection = () => {
-    onScheduleInspection?.();
-    // Scroll to contact section with inspection pre-selected
-    const contactSection = document.getElementById('contact');
-    if (contactSection) {
-      contactSection.scrollIntoView({ behavior: 'smooth' });
-      // Set service type to inspection after scroll
-      setTimeout(() => {
-        const select = document.getElementById('service-type') as HTMLSelectElement;
-        if (select) {
-          select.value = 'inspection';
-          select.dispatchEvent(new Event('change', { bubbles: true }));
-        }
-      }, 500);
-    }
+    scrollToContact('inspection');
   };
 
   return (

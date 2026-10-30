@@ -1,41 +1,29 @@
 import { Section, Container, Button, Card, CardContent } from '../ui';
+import { financingIcons, type FinancingPartnerName } from '../icons/financingIconsMap';
+import { scrollToContact } from '../../lib/utils/navigation';
 
 export const Financing = () => {
   const handleGetEstimate = () => {
-    const contactSection = document.getElementById('contact');
-    if (contactSection) {
-      contactSection.scrollIntoView({ behavior: 'smooth' });
-    }
+    scrollToContact();
   };
 
-  const financingOptions = [
+  type FinancingOption = {
+    name: FinancingPartnerName;
+    description: string;
+  };
+
+  const financingOptions: FinancingOption[] = [
     {
       name: 'Klarna',
       description: 'Pay in 4 interest-free installments or monthly financing',
-      icon: (
-        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z" />
-        </svg>
-      ),
     },
     {
       name: 'Splitit',
       description: 'Split payments over time using your existing credit card',
-      icon: (
-        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V6h16v12z" />
-          <path d="M8 12h8v2H8zm0-4h8v2H8z" fill="white" />
-        </svg>
-      ),
     },
     {
       name: 'Afterpay',
       description: 'Shop now, pay later in 4 interest-free payments',
-      icon: (
-        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z" />
-        </svg>
-      ),
     },
   ];
 
@@ -87,22 +75,25 @@ export const Financing = () => {
 
         {/* Financing Partners */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          {financingOptions.map((option) => (
-            <Card
-              key={option.name}
-              variant="elevated"
-              padding="lg"
-              className="text-center h-full transition-all hover:shadow-xl"
-            >
-              <CardContent>
-                <div className="w-14 h-14 mx-auto mb-4 rounded-xl bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)]">
-                  {option.icon}
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">{option.name}</h3>
-                <p className="text-gray-600">{option.description}</p>
-              </CardContent>
-            </Card>
-          ))}
+          {financingOptions.map((option) => {
+            const Icon = financingIcons[option.name];
+            return (
+              <Card
+                key={option.name}
+                variant="elevated"
+                padding="lg"
+                className="text-center h-full transition-all hover:shadow-xl"
+              >
+                <CardContent>
+                  <div className="w-14 h-14 mx-auto mb-4 rounded-xl bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)]">
+                    <Icon />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">{option.name}</h3>
+                  <p className="text-gray-600">{option.description}</p>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
 
         {/* Benefits */}
