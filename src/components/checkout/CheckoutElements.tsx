@@ -15,10 +15,9 @@ export interface CheckoutElementsProps {
 }
 
 interface CompletionPayload {
-  result: 'payment' | 'setup_intent';
+  result: 'payment' | 'setup';
   paymentId?: string;
   setupIntentId?: string;
-  customerEmail?: string;
 }
 
 async function handleCompletion(planKey: PlanKey, completion: CompletionPayload) {
@@ -27,9 +26,8 @@ async function handleCompletion(planKey: PlanKey, completion: CompletionPayload)
     return;
   }
 
-  if (completion.result === 'setup_intent') {
+  if (completion.result === 'setup') {
     const setupIntentId = completion.setupIntentId;
-    const customerEmail = completion.customerEmail;
 
     if (!setupIntentId) {
       console.error('Missing setupIntentId in completion payload');
@@ -37,17 +35,11 @@ async function handleCompletion(planKey: PlanKey, completion: CompletionPayload)
       return;
     }
 
-    if (!customerEmail) {
-      console.error('Missing customerEmail in completion payload');
-      toast.error('Failed to save payment method: missing customer email');
-      return;
-    }
-
     try {
       const response = await fetch('/api/setup-intents/finalize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ setup_intent_id: setupIntentId, customer_email: customerEmail }),
+        body: JSON.stringify({ setup_intent_id: setupIntentId }),
       });
 
       if (!response.ok) {
