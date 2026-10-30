@@ -8,9 +8,9 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
 export const Card = forwardRef<HTMLDivElement, CardProps>(
   ({ variant = 'default', padding = 'md', className, children, ...props }, ref) => {
     const variants = {
-      default: 'bg-white border border-gray-200',
-      outlined: 'bg-white border-2 border-[var(--color-primary)]',
-      elevated: 'bg-white shadow-lg border-none',
+      default: 'bg-[var(--color-surface)] border border-[var(--color-border)]',
+      outlined: 'bg-[var(--color-surface)] border-2 border-[var(--color-primary)]',
+      elevated: 'bg-[var(--color-surface)] shadow-[var(--shadow-elevated)] border-none',
     };
     const paddings = {
       none: '',
@@ -42,7 +42,11 @@ CardHeader.displayName = 'CardHeader';
 
 export const CardTitle = forwardRef<HTMLHeadingElement, HTMLAttributes<HTMLHeadingElement>>(
   ({ className, children, ...props }, ref) => (
-    <h3 ref={ref} className={`text-xl font-semibold text-gray-900 ${className || ''}`} {...props}>
+    <h3
+      ref={ref}
+      className={`text-xl font-semibold text-[var(--color-muted)] ${className || ''}`}
+      {...props}
+    >
       {children}
     </h3>
   )
@@ -53,7 +57,7 @@ export const CardDescription = forwardRef<
   HTMLParagraphElement,
   HTMLAttributes<HTMLParagraphElement>
 >(({ className, children, ...props }, ref) => (
-  <p ref={ref} className={`text-gray-600 mt-1 ${className || ''}`} {...props}>
+  <p ref={ref} className={`text-[var(--color-muted)]/80 mt-1 ${className || ''}`} {...props}>
     {children}
   </p>
 ));
@@ -70,7 +74,11 @@ CardContent.displayName = 'CardContent';
 
 export const CardFooter = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ className, children, ...props }, ref) => (
-    <div ref={ref} className={`mt-4 pt-4 border-t border-gray-100 ${className || ''}`} {...props}>
+    <div
+      ref={ref}
+      className={`mt-4 pt-4 border-t border-[var(--color-border)] ${className || ''}`}
+      {...props}
+    >
       {children}
     </div>
   )

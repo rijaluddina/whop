@@ -11,7 +11,7 @@ export const Section = forwardRef<HTMLElement, SectionProps>(
     const variants = {
       default: 'bg-[var(--color-background)]',
       alternate: 'bg-[var(--color-surface)]',
-      dark: 'bg-gray-900 text-white',
+      dark: 'bg-[var(--color-dark-bg)] text-[var(--color-dark-text)]',
     };
     const sizes = {
       sm: 'py-12 sm:py-16',

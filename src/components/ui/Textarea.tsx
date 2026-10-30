@@ -27,7 +27,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
             bg-white text-gray-900 placeholder:text-gray-400
             focus:outline-none focus:ring-2 focus:ring-offset-0
             disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed
-            ${error ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]'}
+            ${error ? 'border-[var(--color-error)] focus:ring-[var(--color-error)] focus:border-[var(--color-error)]' : 'border-[var(--color-border)] focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]'}
             ${className || ''}
           `}
           aria-invalid={error ? 'true' : 'false'}

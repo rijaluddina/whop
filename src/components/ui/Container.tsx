@@ -1,8 +1,8 @@
-import { HTMLAttributes, forwardRef } from 'react';
+import { HTMLAttributes, forwardRef, ElementType } from 'react';
 
 export interface ContainerProps extends HTMLAttributes<HTMLDivElement> {
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
-  as?: 'div' | 'section' | 'main' | 'article' | 'aside';
+  as?: ElementType;
 }
 
 export const Container = forwardRef<HTMLDivElement, ContainerProps>(

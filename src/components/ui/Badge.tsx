@@ -9,13 +9,13 @@ export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
 export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
   ({ variant = 'default', size = 'md', dot, className, children, ...props }, ref) => {
     const variants = {
-      default: 'bg-gray-100 text-gray-800',
+      default: 'bg-[var(--color-muted)]/10 text-[var(--color-muted)]',
       primary: 'bg-[var(--color-primary)]/10 text-[var(--color-primary)]',
       secondary: 'bg-[var(--color-secondary)]/10 text-[var(--color-secondary)]',
-      success: 'bg-green-100 text-green-800',
-      warning: 'bg-yellow-100 text-yellow-800',
-      danger: 'bg-red-100 text-red-800',
-      outline: 'bg-transparent border border-gray-300 text-gray-700',
+      success: 'bg-[var(--color-success)]/10 text-[var(--color-success)]',
+      warning: 'bg-[var(--color-warning)]/10 text-[var(--color-warning)]',
+      danger: 'bg-[var(--color-danger)]/10 text-[var(--color-danger)]',
+      outline: 'bg-transparent border border-[var(--color-border)] text-[var(--color-muted)]',
     };
     const sizes = {
       sm: 'px-2 py-0.5 text-xs',
@@ -23,13 +23,13 @@ export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
       lg: 'px-3 py-1.5 text-base',
     };
     const dotColors = {
-      default: 'bg-gray-400',
+      default: 'bg-[var(--color-muted)]',
       primary: 'bg-[var(--color-primary)]',
       secondary: 'bg-[var(--color-secondary)]',
-      success: 'bg-green-500',
-      warning: 'bg-yellow-500',
-      danger: 'bg-red-500',
-      outline: 'bg-gray-400',
+      success: 'bg-[var(--color-success)]',
+      warning: 'bg-[var(--color-warning)]',
+      danger: 'bg-[var(--color-danger)]',
+      outline: 'bg-[var(--color-muted)]',
     };
     const dotSizes = {
       sm: 'w-1.5 h-1.5',
