@@ -47,6 +47,7 @@ export const Hero = () => {
                 key={badge}
                 variant="outline"
                 size="md"
+                role="listitem"
                 className="bg-white/10 text-white border-white/20 hover:bg-white/20 transition-colors"
               >
                 {badge}

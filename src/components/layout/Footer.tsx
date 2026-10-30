@@ -253,10 +253,10 @@ export const Footer = ({ className }: FooterProps) => {
 
         {/* Bottom Bar */}
         <div className="mt-12 pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-gray-500 text-sm">
+          <p className="text-gray-400 text-sm">
             &copy; {currentYear} {companyConfig.name}. All rights reserved.
           </p>
-          <div className="flex items-center space-x-6 text-sm text-gray-500">
+          <div className="flex items-center space-x-6 text-sm text-gray-400">
             <a href="#privacy" className="hover:text-[var(--color-secondary)] transition-colors">
               Privacy Policy
             </a>
