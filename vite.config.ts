@@ -4,6 +4,9 @@ import { whop } from '@whop/cli/vite';
 import { resolve } from 'path';
 import type { Plugin } from 'vite';
 
+// @cloudflare/vite-plugin is required by Whop CLI for Cloudflare Workers hosting
+// import { cloudflare } from '@cloudflare/vite-plugin';
+
 // Plugin to rename SSR entry point to index.js
 function renameSsrEntry(): Plugin {
   return {
@@ -13,10 +16,8 @@ function renameSsrEntry(): Plugin {
       _options: { entryFileNames?: string },
       bundle: Record<string, { type?: string; isEntry?: boolean; fileName?: string }>
     ) {
-      // Find the entry point and rename it
       for (const [fileName, chunk] of Object.entries(bundle)) {
         if (chunk.type === 'chunk' && chunk.isEntry) {
-          // Delete the old entry and emit a new one with index.js name
           delete bundle[fileName];
           chunk.fileName = 'index.js';
           bundle['index.js'] = chunk;
@@ -28,7 +29,11 @@ function renameSsrEntry(): Plugin {
 }
 
 export default defineConfig({
-  plugins: [react(), whop(), renameSsrEntry()],
+  plugins: [
+    react(),
+    whop(),
+    /* cloudflare({ viteEnvironment: { name: 'ssr' } }), */ renameSsrEntry(),
+  ],
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),

@@ -22,7 +22,7 @@ const getNavItems = (sections: string[]) =>
 export const Navigation = ({
   className,
   onNavClick,
-  sections = ['home', 'services', 'about', 'reviews', 'contact'],
+  sections = ['home', 'services', 'reviews', 'contact'],
   scrollOffset = DEFAULT_SCROLL_OFFSET,
 }: NavigationProps) => {
   const [activeSection, setActiveSection] = useState<string>('home');

@@ -1,0 +1,12 @@
+{
+  "name": "apex-roofing",
+  "compatibility_date": "2024-10-30",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "src/entry-server.ts",
+  "assets": {
+    "directory": "./dist/client",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  }
+}

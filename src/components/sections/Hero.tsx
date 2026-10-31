@@ -13,6 +13,7 @@ export const Hero = () => {
 
   return (
     <Section
+      id="home"
       variant="default"
       size="xl"
       fullWidth
