@@ -24,9 +24,6 @@ function CheckoutEmbed({ planId }: { planId: string | undefined }) {
   }
 
   return (
-    sandbox ? <div className="checkout-embed">
-      <iframe title="Whop checkout" src={`https://sandbox.whop.com/checkout/${planId}`} allow="payment *" />
-    </div> :
     <WhopElements
       elements={elements}
       environment={sandbox ? 'sandbox' : 'production'}
