@@ -1,0 +1,4 @@
+# Copy to .dev.vars for local Worker testing. Never put real values in this example file.
+APEX_WHOP_API_KEY=apik_replace_me
+APEX_WHOP_ACCOUNT_ID=biz_replace_me
+APEX_WHOP_ENVIRONMENT=sandbox

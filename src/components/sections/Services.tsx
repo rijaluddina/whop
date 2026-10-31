@@ -1,5 +1,5 @@
 import { plans } from '../../lib/config/plans';
-import { trackingEvents, generateEventId } from '../../lib/config/tracking';
+import { businessConfig, formatBusinessCurrency } from '../../lib/config/business';
 import { navigateToCheckout, scrollToContact } from '../../lib/utils/navigation';
 
 import {
@@ -18,7 +18,7 @@ import {
 interface ServiceCardProps {
   title: string;
   description: string;
-  features: string[];
+  features: readonly string[];
   price: number;
   planKey: keyof typeof plans;
   icon: React.ReactNode;
@@ -37,23 +37,7 @@ const ServiceCard = ({
   const plan = plans[planKey];
 
   const handleClick = () => {
-    // Fire tracking event
-    if (typeof window !== 'undefined' && window.whop) {
-      window.whop.track(trackingEvents.serviceViewed, {
-        service: plan.metadata.serviceType,
-        plan_id: plan.whopPlanId,
-        event_id: generateEventId('svc'),
-      });
-    }
     onClick?.();
-  };
-
-  const formatPrice = (cents: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-    }).format(cents / 100);
   };
 
   return (
@@ -95,7 +79,7 @@ const ServiceCard = ({
       <CardFooter className="border-t border-[var(--color-border)] pt-4">
         <div className="flex items-center justify-between mb-4">
           <span className="text-2xl font-bold text-[var(--color-primary)]">
-            {formatPrice(price)}
+            {formatBusinessCurrency(price)}
           </span>
           <Badge variant="primary" size="sm">
             {plan.type === 'one_time' ? 'One-time' : 'Recurring'}
@@ -122,23 +106,14 @@ const ServiceCard = ({
 // This ensures price/description/features stay in sync with the single source of truth
 const createServiceData = () => {
   const repairPlan = plans.deposit;
-  const replacementPlan = plans.flatRate;
+  const replacementPlan = plans.replacement;
   const inspectionPlan = plans.inspection;
+  const services = businessConfig.services;
 
   return [
     {
       id: 'repair',
-      title: 'Roof Repair',
-      description:
-        'Fast, reliable fixes for leaks, storm damage, and wear. We handle everything from minor patches to major structural repairs.',
-      features: [
-        'Leak detection & repair',
-        'Storm & hail damage',
-        'Shingle replacement',
-        'Flashing repair & replacement',
-        'Emergency tarping available',
-        'Workmanship warranty included',
-      ],
+      ...services.repair,
       price: repairPlan.price, // From plans config
       planKey: 'deposit' as const,
       icon: (
@@ -161,19 +136,9 @@ const createServiceData = () => {
     },
     {
       id: 'replacement',
-      title: 'Roof Replacement',
-      description:
-        'Complete roof replacement with premium materials. Up to 2,000 sq ft of asphalt shingles with full tear-off and installation.',
-      features: [
-        'Full tear-off & disposal',
-        'Premium asphalt shingles',
-        'New flashing & drip edge',
-        'Ridge vent installation',
-        '10-year workmanship warranty',
-        'Manufacturer warranty registration',
-      ],
+      ...services.replacement,
       price: replacementPlan.price, // From plans config
-      planKey: 'flatRate' as const,
+      planKey: 'replacement' as const,
       icon: (
         <svg
           className="w-7 h-7"
@@ -196,21 +161,11 @@ const createServiceData = () => {
           />
         </svg>
       ),
-      onClick: () => navigateToCheckout('flatRate'),
+      onClick: () => navigateToCheckout('replacement'),
     },
     {
       id: 'inspection',
-      title: 'Roof Inspection',
-      description:
-        'Comprehensive 21-point inspection with detailed photo report. Identify issues early and plan maintenance with confidence.',
-      features: [
-        '21-point inspection checklist',
-        'Drone roof assessment',
-        'Attic & ventilation check',
-        'Detailed photo report',
-        'Maintenance recommendations',
-        'Free with any repair job',
-      ],
+      ...services.inspection,
       price: inspectionPlan.price, // From plans config
       planKey: 'inspection' as const,
       icon: (
