@@ -105,23 +105,110 @@ async function handleInvoice(request: Request, env: Env) {
       400
     );
   }
-  if (!env.APEX_WHOP_FINAL_BALANCE_PLAN_ID)
-    return json({ message: 'The final balance plan is not configured.' }, 503);
-
-  const whop = whopClient(env);
-  const created = await whop.invoices.create({
-    account_id: env.APEX_WHOP_ACCOUNT_ID!,
-    email_address: invoice.email.trim(),
-    customer_name: invoice.name.trim(),
-    items: [{ quantity: 1, variant_id: env.APEX_WHOP_FINAL_BALANCE_PLAN_ID }],
-    metadata: { type: 'final_balance', description: invoice.description.trim() },
-  });
+  const created = await createFinalBalanceInvoice(
+    env,
+    invoice.name.trim(),
+    invoice.email.trim(),
+    invoice.description.trim()
+  );
   const summary = created as {
     id?: string;
     status?: string;
     amount_due?: { amount?: string; currency?: string };
   };
   return json({ id: summary.id, status: summary.status, amount: summary.amount_due ?? null }, 201);
+}
+
+async function createFinalBalanceInvoice(
+  env: Env,
+  name: string,
+  email: string,
+  description: string
+) {
+  if (!env.APEX_WHOP_FINAL_BALANCE_PLAN_ID)
+    throw new Error('The final balance plan is not configured.');
+  const whop = whopClient(env);
+  return whop.invoices.create({
+    account_id: env.APEX_WHOP_ACCOUNT_ID!,
+    email_address: email,
+    customer_name: name,
+    items: [{ quantity: 1, variant_id: env.APEX_WHOP_FINAL_BALANCE_PLAN_ID }],
+    metadata: { type: 'final_balance', description },
+  });
+}
+
+const escapeHtml = (value: string) =>
+  value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+function adminPage(body: string) {
+  return new Response(
+    `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Apex Roofing — Final balance invoice</title><style>body{font-family:system-ui,sans-serif;background:#f8fafc;color:#111827;display:grid;place-items:center;min-height:100vh;margin:0}main{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:2rem;width:min(30rem,92vw)}h1{font-size:1.25rem;margin:0 0 .25rem}p{color:#64748b;margin:.25rem 0 1rem;font-size:.9rem}label{display:block;font-size:.8rem;font-weight:600;margin:.9rem 0 .25rem}input,textarea{width:100%;box-sizing:border-box;padding:.6rem;border:1px solid #cbd5e1;border-radius:.5rem;font:inherit}button{margin-top:1.25rem;width:100%;padding:.75rem;border:0;border-radius:.5rem;background:#1b4f72;color:#fff;font-weight:700;cursor:pointer}.ok{background:#ecfdf5;border:1px solid #059669;border-radius:.5rem;padding:1rem;margin-bottom:1rem}a{color:#1b4f72}</style></head><body><main>${body}</main></body></html>`,
+    { headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+  );
+}
+
+function basicAuthPassword(request: Request): string | null {
+  const header = request.headers.get('Authorization') ?? '';
+  if (!header.startsWith('Basic ')) return null;
+  try {
+    const decoded = atob(header.slice(6));
+    return decoded.slice(decoded.indexOf(':') + 1);
+  } catch {
+    return null;
+  }
+}
+
+async function handleAdminInvoices(request: Request, env: Env) {
+  const password = basicAuthPassword(request);
+  if (
+    !env.APEX_INVOICE_ADMIN_TOKEN ||
+    env.APEX_INVOICE_ADMIN_TOKEN.length < 32 ||
+    password !== env.APEX_INVOICE_ADMIN_TOKEN
+  ) {
+    return new Response('Unauthorized', {
+      status: 401,
+      headers: { 'WWW-Authenticate': 'Basic realm="Apex Roofing admin", charset="UTF-8"' },
+    });
+  }
+
+  if (request.method === 'GET') {
+    return adminPage(
+      `<h1>Final balance invoice</h1><p>Creates a draft Whop invoice for the remaining project balance. Nothing is charged or emailed until it is issued from the Whop Dashboard.</p>
+       <form method="post"><label>Customer name<input name="name" required></label>
+       <label>Customer email<input name="email" type="email" required></label>
+       <label>Description<textarea name="description" rows="2" required></textarea></label>
+       <button type="submit">Create draft invoice</button></form>`
+    );
+  }
+
+  const form = await request.formData().catch(() => undefined);
+  const name = String(form?.get('name') ?? '').trim();
+  const email = String(form?.get('email') ?? '').trim();
+  const description = String(form?.get('description') ?? '').trim();
+  if (!name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !description) {
+    return adminPage(
+      '<h1>Final balance invoice</h1><p>Provide a customer name, a valid email, and a description.</p><p><a href="/admin/invoices">Back to the form</a></p>'
+    );
+  }
+
+  const created = (await createFinalBalanceInvoice(env, name, email, description)) as {
+    id?: string;
+    status?: string;
+    amount_due?: { amount?: string; currency?: string };
+  };
+  const dashboard = `https://whop.com/dashboard/${env.APEX_WHOP_ACCOUNT_ID}/payments/${created.id ?? ''}`;
+  return adminPage(
+    `<div class="ok"><strong>Draft invoice created.</strong><br>${escapeHtml(created.id ?? '')} — ${escapeHtml(
+      created.amount_due?.currency?.toUpperCase() ?? ''
+    )} ${escapeHtml(created.amount_due?.amount ?? '')} (${escapeHtml(created.status ?? '')})</div>
+     <p><a href="${dashboard}" target="_blank" rel="noopener">Open it in the Whop Dashboard</a></p>
+     <p><a href="/admin/invoices">Create another</a></p>`
+  );
 }
 
 export default {
@@ -141,6 +228,19 @@ export default {
       } catch (error) {
         console.error('Invoice creation failed', error);
         return json({ message: 'Unable to create the Whop invoice.' }, 502);
+      }
+    }
+    if (
+      url.pathname === '/admin/invoices' &&
+      (request.method === 'GET' || request.method === 'POST')
+    ) {
+      try {
+        return await handleAdminInvoices(request, env);
+      } catch (error) {
+        console.error('Invoice creation failed', error);
+        return adminPage(
+          '<h1>Final balance invoice</h1><p>Unable to create the Whop invoice. Check the app logs and try again.</p>'
+        );
       }
     }
     if (url.pathname.startsWith('/api/')) return json({ message: 'Not found' }, 404);

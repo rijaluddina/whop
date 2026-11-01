@@ -24,7 +24,7 @@ Isi nilai Sandbox sebelum membuka halaman checkout. `.env.local` berisi plan ID 
 
 API key harus memiliki izin: `lead:manage`, `event:create`, `invoice:create`, `member:email:read`, `member:basic:read`, `payment:basic:read`, dan `company:create_child` (dipakai mendaftarkan pengunjung sebagai Whop user sebelum lead dibuat). Jangan gunakan awalan `VITE_` pada nama API key atau secret server lain karena variabel `VITE_` dapat masuk ke bundle browser.
 
-Endpoint `POST /api/invoices` hanya menerima request dengan `Authorization: Bearer <APEX_INVOICE_ADMIN_TOKEN>`. Buat token dengan `openssl rand -hex 32`. Ia membuat **draft** invoice Whop dari varian final balance — tidak mengirim email dan tidak menagih pelanggan. Kirim JSON `{ "name": "Customer", "email": "customer@example.com", "description": "Final balance — roof replacement" }`. Finalisasi dan pengiriman invoice dilakukan dari Whop Dashboard setelah detail pekerjaan diperiksa. Jangan pernah menaruh token admin di frontend.
+Halaman admin `GET/POST /admin/invoices` membuat draft invoice saldo akhir lewat form browser: buka URL-nya, masukkan HTTP Basic auth dengan username bebas dan `APEX_INVOICE_ADMIN_TOKEN` sebagai password, isi nama, email, dan deskripsi, lalu klik **Create draft invoice**. Ia membuat **draft** invoice Whop dari varian final balance — tidak mengirim email dan tidak menagih pelanggan. Finalisasi dan pengiriman invoice dilakukan dari Whop Dashboard setelah detail pekerjaan diperiksa. Untuk otomasi, endpoint `POST /api/invoices` menerima JSON yang sama dengan `Authorization: Bearer <APEX_INVOICE_ADMIN_TOKEN>`; buat token dengan `openssl rand -hex 32`. Jangan pernah menaruh token admin di frontend.
 
 ## Sesuaikan untuk bisnis lain
 
