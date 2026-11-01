@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useEstimateForm, EstimateFormData } from '../../hooks/useEstimateForm';
 import { serviceOptions } from '../../lib/config/services';
+import { trackEvent } from '../../lib/tracking';
 import {
   Button,
   Input,
@@ -93,6 +94,13 @@ export function EstimateForm() {
     const result = await submit(formData);
 
     if (result.success) {
+      trackEvent('estimate_requested', {
+        service_type: formData.serviceType,
+        customer_name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        address: formData.address,
+      });
       setSubmitStatus('success');
       setSubmitMessage(
         "Thank you! We'll contact you within 24 hours to schedule your free estimate."

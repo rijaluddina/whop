@@ -14,15 +14,16 @@ const SCROLL_THROTTLE_MS = 16; // ~60fps
 const getNavItems = (sections: string[]) =>
   sections
     .filter((section) => section !== 'home')
-    .map((id) => ({
-      id,
-      label: id.charAt(0).toUpperCase() + id.slice(1),
-    }));
+    .map((id) => {
+      let label = id.charAt(0).toUpperCase() + id.slice(1);
+      if (id === 'service-area') label = 'Service Area';
+      return { id, label };
+    });
 
 export const Navigation = ({
   className,
   onNavClick,
-  sections = ['home', 'services', 'reviews', 'contact'],
+  sections = ['home', 'services', 'service-area', 'financing', 'reviews', 'contact'],
   scrollOffset = DEFAULT_SCROLL_OFFSET,
 }: NavigationProps) => {
   const [activeSection, setActiveSection] = useState<string>('home');

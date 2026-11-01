@@ -23,10 +23,12 @@ export function useEstimateForm() {
         body: JSON.stringify({ ...data, service: data.serviceType }),
       });
       const result = (await response.json().catch(() => ({}))) as { message?: string };
-      if (!response.ok) throw new Error(result.message || 'Unable to submit your estimate request.');
+      if (!response.ok)
+        throw new Error(result.message || 'Unable to submit your estimate request.');
       return { success: true as const };
     } catch (cause) {
-      const message = cause instanceof Error ? cause.message : 'Unable to submit your estimate request.';
+      const message =
+        cause instanceof Error ? cause.message : 'Unable to submit your estimate request.';
       setError(message);
       return { success: false as const, error: new Error(message) };
     } finally {

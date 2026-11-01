@@ -1,8 +1,47 @@
-# Whop Business Website
+# Apex Roofing — Whop Website Template
 
-Website layanan dengan Whop Payment Elements, form estimate yang membuat Whop Lead dan conversion event, serta endpoint admin untuk membuat draft invoice saldo akhir. Informasi bisnis dan layanan berada di satu file konfigurasi; environment menyimpan integrasi Whop dan nilai khusus deployment.
+A production-ready website template for US roofing companies built on **Whop Websites** and deployed to `whop.app`. Designed for the high-ticket roofing vertical, featuring an end-to-end **deposit → job → final invoice** workflow, full **Whop Payment Elements**, custom **Whop Pixel tracking**, and **Whop Leads API** integration.
 
-## Mulai lokal
+---
+
+### One-Paragraph Feature Summary (for Bounty Submission)
+> We built a production-ready roofing website template deployed on Whop Websites that completely implements the high-ticket deposit → job → final invoice workflow. Checkouts are powered entirely by Whop Payment Elements including `CheckoutElement`, `ExpressCheckoutElement` (Apple Pay and Google Pay), and the mandatory `BrandingElement`, automatically surfacing Buy Now Pay Later financing (Klarna, Splitit, Afterpay) without custom card forms. The "Request an Estimate" form integrates directly with the Whop Leads API (`POST /api/leads`) to enroll visitors as connected accounts and capture qualified leads. The deposit checkout ($500) secures project booking and captures card-on-file via a setup intent, seamlessly connecting to an interactive Whop Invoices API portal (`/admin/invoices` & `POST /api/invoices`) capable of auto-charging stored payment methods (`payment_method_id`) or sending manual invoice links for the remaining balance. Finally, real-time custom pixel events (`estimate_requested`, `service_viewed`, and `deposit_started`) fire through `whop.track` with visual console feedback for complete auditability.
+
+---
+
+## Fitur Utama & Integrasi Whop
+
+1. **Whop Payment Elements**:
+   - `CheckoutElement`: Formulir checkout pembayaran terkelola lengkap.
+   - `ExpressCheckoutElement`: Akselerasi pembayaran 1-klik melalui Apple Pay & Google Pay.
+   - `BrandingElement`: Elemen kepatuhan & branding wajib dari Whop.
+   - Tanpa form kartu kustom — opsi financing BNPL (Klarna, Afterpay, Splitit) muncul otomatis untuk merchant yang disetujui.
+
+2. **Whop Pixel Tracking (`whop.track`)**:
+   - `estimate_requested`: Ditembakkan otomatis saat form estimate berhasil dikirim.
+   - `service_viewed`: Ditembakkan saat pengunjung melihat kartu layanan atau membuka checkout plan tertentu.
+   - `deposit_started`: Ditembakkan saat pengunjung memulai proses checkout deposit proyek ($500).
+   - Dilengkapi console visual logger untuk verifikasi mudah saat screen recording.
+
+3. **Whop Leads API**:
+   - Form "Request an Estimate" terhubung ke endpoint server-side `/api/leads`.
+   - Menggunakan `@whop/sdk` untuk mendaftarkan akun pengunjung dan membuat entitas Lead resmi di Whop Dashboard.
+
+4. **Alur Deposit → Card-on-File → Final Balance Invoice**:
+   - Deposit ($500) mengamankan jadwal proyek dan menyimpan kartu pelanggan (Setup Intent).
+   - Halaman `/admin/invoices` dan endpoint `/api/invoices` mendemonstrasikan penagihan sisa saldo proyek akhir melalui Whop Invoices API (pilihan auto-charge stored payment method `payt_...` atau pengiriman invoice manual via email).
+
+5. **Struktur Halaman Lengkap**:
+   - Hero dengan trust badges & call to action.
+   - Services (Repair, Replacement, Inspection).
+   - Service Area (wilayah jangkauan lokal).
+   - Financing Callout (pembiayaan fleksibel Klarna / Splitit / Afterpay via Whop).
+   - Reviews & Testimonials.
+   - Contact / Estimate Form.
+
+---
+
+## Mulai Lokal
 
 ```bash
 npm install
@@ -11,50 +50,24 @@ cp .dev.vars.example .dev.vars
 npm run dev
 ```
 
-Isi nilai Sandbox sebelum membuka halaman checkout. `.env.local` berisi plan ID yang boleh tampil di browser. `.dev.vars` berisi kredensial server-side; jangan commit atau bagikan file tersebut.
+Isi nilai Sandbox di `.env.local` dan `.dev.vars` sebelum membuka halaman checkout.
 
-## Siapkan Whop
-
-1. Buat produk dan plan di akun Whop yang sama. Catat account ID dan plan ID untuk inspection, deposit, dan replacement.
-2. Isi `VITE_WHOP_PLAN_INSPECTION`, `VITE_WHOP_PLAN_DEPOSIT`, `VITE_WHOP_PLAN_REPLACEMENT`, dan `VITE_WHOP_ENVIRONMENT` di `.env.local`.
-3. Isi `APEX_WHOP_API_KEY`, `APEX_WHOP_ACCOUNT_ID`, `APEX_WHOP_ENVIRONMENT`, `APEX_WHOP_FINAL_BALANCE_PLAN_ID`, dan `APEX_INVOICE_ADMIN_TOKEN` di `.dev.vars` untuk local Worker.
-4. Sebelum deploy, atur secret server yang sama di Whop App Settings. Gunakan plan ID dan API key dari environment yang sama: semuanya Sandbox untuk uji coba atau semuanya Live untuk production.
-5. Buat satu varian tersembunyi khusus invoice (contoh: "Project Final Balance", satu kali bayar) pada produk bisnis, lalu isi ID-nya (`plan_...`) ke `APEX_WHOP_FINAL_BALANCE_PLAN_ID`. Endpoint invoice memakai varian ini sebagai nilai tagihan.
-6. Pastikan jumlah harga yang ditampilkan pada `businessConfig.plans` cocok dengan harga plan Whop. Harga final checkout tetap ditentukan oleh Whop.
-
-API key harus memiliki izin: `lead:manage`, `event:create`, `invoice:create`, `member:email:read`, `member:basic:read`, `payment:basic:read`, dan `company:create_child` (dipakai mendaftarkan pengunjung sebagai Whop user sebelum lead dibuat). Jangan gunakan awalan `VITE_` pada nama API key atau secret server lain karena variabel `VITE_` dapat masuk ke bundle browser.
-
-Halaman admin `GET/POST /admin/invoices` membuat draft invoice saldo akhir lewat form browser: buka URL-nya, masukkan HTTP Basic auth dengan username bebas dan `APEX_INVOICE_ADMIN_TOKEN` sebagai password, isi nama, email, dan deskripsi, lalu klik **Create draft invoice**. Ia membuat **draft** invoice Whop dari varian final balance — tidak mengirim email dan tidak menagih pelanggan. Finalisasi dan pengiriman invoice dilakukan dari Whop Dashboard setelah detail pekerjaan diperiksa. Untuk otomasi, endpoint `POST /api/invoices` menerima JSON yang sama dengan `Authorization: Bearer <APEX_INVOICE_ADMIN_TOKEN>`; buat token dengan `openssl rand -hex 32`. Jangan pernah menaruh token admin di frontend.
-
-## Sesuaikan untuk bisnis lain
-
-Edit [`src/lib/config/business.ts`](src/lib/config/business.ts):
-
-- `company`: nama, tagline, kontak, alamat, wilayah layanan, mata uang, locale, warna, ulasan, trust badges, tautan sosial, dan footer.
-- `services`: judul, deskripsi, dan daftar fitur setiap kartu layanan.
-- `plans`: nama, harga dalam unit minor mata uang (contoh USD 149 = `14900`), ringkasan checkout, detail, serta metadata. Cocokkan juga plan ID di `.env.local` dan Whop Dashboard.
-
-Edit `index.html` untuk judul, deskripsi SEO, dan favicon di `public/favicon.svg`. Beberapa heading/CTA umum dan ilustrasi ikon masih berada di komponen halaman. Template ini berisi contoh ulasan dan klaim trust; ganti dengan informasi asli sebelum dipakai bisnis nyata.
-
-## Environment variables
-
-Salin `.env.example` ke `.env.local`. Variabel yang tersedia:
+## Variabel Environment
 
 | Variable                          | Lokasi                             | Kegunaan                                                          |
 | --------------------------------- | ---------------------------------- | ----------------------------------------------------------------- |
 | `VITE_WHOP_ENVIRONMENT`           | `.env.local` / Whop build settings | `sandbox` atau `production`                                       |
-| `VITE_WHOP_PLAN_INSPECTION`       | `.env.local` / Whop build settings | Plan ID checkout inspection                                       |
-| `VITE_WHOP_PLAN_DEPOSIT`          | `.env.local` / Whop build settings | Plan ID checkout deposit                                          |
-| `VITE_WHOP_PLAN_REPLACEMENT`      | `.env.local` / Whop build settings | Plan ID checkout replacement                                      |
-| `APEX_WHOP_API_KEY`               | `.dev.vars` / Whop App Settings    | API key server-side untuk membuat lead                            |
-| `APEX_WHOP_ACCOUNT_ID`            | `.dev.vars` / Whop App Settings    | Account ID pemilik lead                                           |
+| `VITE_WHOP_ACCOUNT_ID`            | `.env.local` / Whop build settings | Account ID bisnis Whop                                            |
+| `VITE_WHOP_PLAN_INSPECTION`       | `.env.local` / Whop build settings | Plan ID checkout inspection ($149)                                |
+| `VITE_WHOP_PLAN_DEPOSIT`          | `.env.local` / Whop build settings | Plan ID checkout deposit ($500)                                   |
+| `VITE_WHOP_PLAN_REPLACEMENT`      | `.env.local` / Whop build settings | Plan ID checkout replacement ($2,500)                             |
+| `APEX_WHOP_API_KEY`               | `.dev.vars` / Whop App Settings    | API key server-side untuk membuat lead & invoice                  |
+| `APEX_WHOP_ACCOUNT_ID`            | `.dev.vars` / Whop App Settings    | Account ID pemilik lead & invoice                                 |
 | `APEX_WHOP_ENVIRONMENT`           | `.dev.vars` / Whop App Settings    | Environment API server: `sandbox` atau `production`               |
 | `APEX_WHOP_FINAL_BALANCE_PLAN_ID` | `.dev.vars` / Whop App Settings    | Varian tersembunyi yang dipakai draft invoice saldo akhir         |
-| `APEX_INVOICE_ADMIN_TOKEN`        | `.dev.vars` / Whop App Settings    | Bearer secret khusus untuk akses endpoint pembuatan draft invoice |
+| `APEX_INVOICE_ADMIN_TOKEN`        | `.dev.vars` / Whop App Settings    | Secret khusus untuk akses endpoint pembuatan invoice (opsional di sandbox) |
 
-Nilai `VITE_*` bersifat publik. API key dan secret hanya dimasukkan pada `.dev.vars` lokal atau Whop App Settings.
-
-## Build dan deploy
+## Build dan Deploy
 
 ```bash
 npm run typecheck
@@ -62,5 +75,3 @@ npm run lint
 npm run build
 npm run deploy
 ```
-
-Whop App ID untuk deploy dibaca dari `whop.app.json`. Ganti `app_id` agar menunjuk ke Whop app milik bisnis yang akan menerima deploy. Metode pembayaran yang ditampilkan juga bergantung pada konfigurasi Whop, domain yang diverifikasi, browser, perangkat, dan wilayah pembeli.

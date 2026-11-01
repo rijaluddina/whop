@@ -1,6 +1,7 @@
 import { plans } from '../../lib/config/plans';
 import { businessConfig, formatBusinessCurrency } from '../../lib/config/business';
 import { navigateToCheckout, scrollToContact } from '../../lib/utils/navigation';
+import { trackEvent } from '../../lib/tracking';
 
 import {
   Button,
@@ -132,7 +133,15 @@ const createServiceData = () => {
           />
         </svg>
       ),
-      onClick: () => navigateToCheckout('deposit'),
+      onClick: () => {
+        trackEvent('service_viewed', { service: 'Roof Repair / Project Deposit', plan: 'deposit' });
+        trackEvent('deposit_started', {
+          service: 'Project Deposit',
+          amount: repairPlan.price,
+          plan: 'deposit',
+        });
+        navigateToCheckout('deposit');
+      },
     },
     {
       id: 'replacement',
@@ -161,7 +170,10 @@ const createServiceData = () => {
           />
         </svg>
       ),
-      onClick: () => navigateToCheckout('replacement'),
+      onClick: () => {
+        trackEvent('service_viewed', { service: 'Roof Replacement', plan: 'replacement' });
+        navigateToCheckout('replacement');
+      },
     },
     {
       id: 'inspection',
@@ -184,7 +196,10 @@ const createServiceData = () => {
           />
         </svg>
       ),
-      onClick: () => navigateToCheckout('inspection'),
+      onClick: () => {
+        trackEvent('service_viewed', { service: 'Roof Inspection', plan: 'inspection' });
+        navigateToCheckout('inspection');
+      },
     },
   ];
 };
