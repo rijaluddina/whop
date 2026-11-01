@@ -81,6 +81,16 @@ async function handleLead(request: Request, env: Env) {
   return json({ id: lead.id }, 201);
 }
 
+// Surface Whop's validation feedback (e.g. a rejected email address) to the
+// visitor instead of a generic failure message. Server-side 5xx details stay generic.
+function whopClientErrorMessage(error: unknown): string | null {
+  if (!(error instanceof Error)) return null;
+  const statusCode = (error as { statusCode?: number }).statusCode;
+  if (!statusCode || statusCode < 400 || statusCode >= 500) return null;
+  const detail = (error as { body?: { error?: { message?: string } } }).body?.error?.message;
+  return typeof detail === 'string' && detail.trim() ? detail : null;
+}
+
 async function handleInvoice(request: Request, env: Env) {
   if (
     !env.APEX_INVOICE_ADMIN_TOKEN ||
@@ -219,7 +229,10 @@ export default {
         return await handleLead(request, env);
       } catch (error) {
         console.error('Lead creation failed', error);
-        return json({ message: 'Unable to submit estimate request.' }, 502);
+        return json(
+          { message: whopClientErrorMessage(error) ?? 'Unable to submit estimate request.' },
+          502
+        );
       }
     }
     if (url.pathname === '/api/invoices' && request.method === 'POST') {
