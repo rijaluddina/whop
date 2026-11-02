@@ -56,27 +56,6 @@ export default function App() {
     if (el) el.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // Fire service_viewed once when the services section scrolls into view.
-  useEffect(() => {
-    const section = document.getElementById('services');
-    if (!section || typeof IntersectionObserver === 'undefined') return;
-    let fired = false;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (fired || !entries.some((entry) => entry.isIntersecting)) return;
-        fired = true;
-        trackEvent('service_viewed', {
-          section: 'services',
-          services: ['Roof Repair', 'Roof Replacement', 'Roof Inspection'],
-        });
-        observer.disconnect();
-      },
-      { threshold: 0.35 }
-    );
-    observer.observe(section);
-    return () => observer.disconnect();
-  }, []);
-
   return (
     <div className="min-h-screen app-shell">
       {toast && (
