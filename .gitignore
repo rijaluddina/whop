@@ -35,3 +35,9 @@ coverage/
 
 # TypeScript
 *.tsbuildinfo
+
+# Local agent tooling (not part of the website)
+.agents/
+skills-lock.json
+src/styles-target.css
+bounty-demo.*
