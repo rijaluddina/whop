@@ -1,243 +1,83 @@
-import { useEffect, useMemo, type CSSProperties } from 'react';
-import { loadWhop } from '@whop/elements';
-import {
-  Checkout as WhopCheckout,
-  CheckoutElement,
-  Payments,
-  BrandingElement,
-  WhopElements,
-} from '@whop/elements-react';
-import { Header, Footer } from './components/layout';
-import { Contact, Financing, Hero, Reviews, ServiceArea, Services } from './components/sections';
-import { businessConfig, formatBusinessCurrency } from './lib/config/business';
-import { plans, type PlanKey } from './lib/config/plans';
-import { trackEvent } from './lib/tracking';
+import { useState, useEffect } from 'react';
+import { Header } from './components/layout/Header';
+import { Footer } from './components/layout/Footer';
+import { Hero } from './components/sections/Hero';
+import { Services } from './components/sections/Services';
+import { Plans } from './components/sections/Plans';
+import { Financing } from './components/sections/Financing';
+import { ServiceArea } from './components/sections/ServiceArea';
+import { Reviews } from './components/sections/Reviews';
+import { Contact } from './components/sections/Contact';
+import { CheckoutModal } from './components/modals/CheckoutModal';
+import { InvoicesModal } from './components/modals/InvoicesModal';
+import { PixelDebugger } from './components/modals/PixelDebugger';
 
-const env = import.meta.env as Record<string, string | undefined>;
-const themeStyle = Object.fromEntries(
-  Object.entries(businessConfig.company.colors).map(([name, value]) => [
-    `--color-${name.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)}`,
-    value,
-  ])
-) as CSSProperties;
+export default function App() {
+  const [checkoutPlan, setCheckoutPlan] = useState<any>(null);
+  const [invoicesOpen, setInvoicesOpen] = useState(false);
+  const [depositReceipt] = useState<any>(null);
+  const [toast, setToast] = useState<{ tone: string; message: string } | null>(null);
 
-function CheckoutEmbed({ planId, planKey }: { planId: string | undefined; planKey: PlanKey }) {
-  const sandbox = env.VITE_WHOP_ENVIRONMENT === 'sandbox';
-  const elements = useMemo(() => loadWhop(), []);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (!params.has('whop_return')) return;
+    const status = params.get('status');
+    const payment = params.get('payment');
+    if (status === 'succeeded') {
+      setToast({ tone: 'success', message: `Payment ${payment ?? ''} confirmed by Whop.` });
+    } else if (status === 'failed') {
+      setToast({ tone: 'error', message: 'Whop reported the payment as failed. Nothing was charged.' });
+    } else if (status === 'canceled') {
+      setToast({ tone: 'error', message: 'Checkout was canceled. Nothing was charged.' });
+    } else if (status) {
+      setToast({ tone: 'success', message: `Payment is still processing (${status}). We will email you when it settles.` });
+    }
+    params.delete('whop_return');
+    params.delete('status');
+    params.delete('payment');
+    params.delete('setup');
+    const query = params.toString();
+    window.history.replaceState({}, '', `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`);
+  }, []);
 
-  if (!planId) {
-    return (
-      <p className="notice">
-        Checkout is not configured yet. Add the matching Whop plan ID to your environment variables.
-      </p>
-    );
-  }
+  const scrollTo = (id: string) => {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
+  };
 
   return (
-    <WhopElements
-      elements={elements}
-      environment={sandbox ? 'sandbox' : 'production'}
-      appearance={{ theme: { appearance: 'light', accentColor: 'orange' } }}
-    >
-      <div className="checkout-embed space-y-4">
-        {/* Hosted Whop Checkout (includes Card, Apple Pay, Google Pay, financing) */}
-        <WhopCheckout
-          plan={planId}
-          returnUrl={`${window.location.origin}/thanks?plan=${planKey}`}
-          onComplete={(completion) => {
-            console.log('[Whop Checkout Complete]', completion);
-            if (completion.result === 'setup') {
-              window.location.href = `/thanks?plan=${planKey}&setup_intent_id=${completion.setupIntentId}`;
-            } else if (completion.result === 'payment') {
-              window.location.href = `/thanks?plan=${planKey}&payment_id=${completion.paymentId}`;
-            }
-          }}
-        >
-          <CheckoutElement />
-        </WhopCheckout>
-
-        {/* Required Whop Branding Element */}
-        <Payments accountId={env.VITE_WHOP_ACCOUNT_ID || 'biz_sxrJ2hJtBgt6lb'} plan={planId}>
-          <BrandingElement />
-        </Payments>
-      </div>
-    </WhopElements>
-  );
-}
-
-function Home() {
-  return (
-    <div style={themeStyle}>
-      <Header />
-      <main className="pt-16 md:pt-20">
-        <Hero />
-        <Services />
+    <div className="min-h-screen app-shell">
+      {toast && (
+        <div className={`app-toast ${toast.tone === 'error' ? 'app-toast-error' : ''}`} role="status" aria-live="polite">
+          {toast.tone === 'error' ? (
+            <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+          ) : (
+            <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
+          )}
+          <span>{toast.message}</span>
+        </div>
+      )}
+      <Header onOpenCheckout={setCheckoutPlan} onOpenInvoicesDemo={() => setInvoicesOpen(true)} onScrollTo={scrollTo} />
+      <main className="flex-1">
+        <Hero onOpenCheckout={setCheckoutPlan} onScrollTo={scrollTo} />
+        <Services onScrollTo={scrollTo} />
+        <Plans onOpenCheckout={setCheckoutPlan} onOpenInvoicesDemo={() => setInvoicesOpen(true)} />
+        <Financing onScrollTo={scrollTo} />
         <ServiceArea />
-        <Financing />
         <Reviews />
         <Contact />
       </main>
-      <Footer />
+      <Footer onScrollTo={scrollTo} onOpenInvoicesDemo={() => setInvoicesOpen(true)} />
+      <CheckoutModal isOpen={!!checkoutPlan} plan={checkoutPlan} onClose={() => setCheckoutPlan(null)} />
+      <InvoicesModal isOpen={invoicesOpen} depositReceipt={depositReceipt} onClose={() => setInvoicesOpen(false)} />
+      <PixelDebugger />
     </div>
   );
-}
-
-function Checkout() {
-  const selected = new URLSearchParams(window.location.search).get('plan') as PlanKey | null;
-  const plan = selected && plans[selected];
-
-  useEffect(() => {
-    if (plan && selected) {
-      trackEvent('service_viewed', {
-        service: plan.name,
-        plan_id: plan.whopPlanId,
-        price: plan.price,
-      });
-
-      if (selected === 'deposit') {
-        trackEvent('deposit_started', {
-          service: plan.name,
-          amount: plan.price,
-          plan_id: plan.whopPlanId,
-        });
-      }
-    }
-  }, [plan, selected]);
-
-  if (!plan || !selected) {
-    return (
-      <main className="centered" style={themeStyle}>
-        <h1>Choose a service first.</h1>
-        <a className="button" href="/">
-          Back to Apex Roofing
-        </a>
-      </main>
-    );
-  }
-
-  return (
-    <main className="checkout-page" style={themeStyle}>
-      <div className="checkout-layout">
-        <section className="checkout-main" aria-labelledby="checkout-title">
-          <a className="brand" href="/">
-            {businessConfig.company.name}
-          </a>
-          <p className="eyebrow">SECURE WHOP CHECKOUT</p>
-          <h1 id="checkout-title">{plan.name}</h1>
-          <p className="price">{formatBusinessCurrency(plan.price)}</p>
-          <CheckoutEmbed planId={plan.whopPlanId} planKey={selected} />
-        </section>
-        <aside className="checkout-summary" aria-label="Service and payment details">
-          <p className="eyebrow">YOUR SERVICE</p>
-          <h2>{plan.name}</h2>
-          <p className="checkout-description">{plan.description}</p>
-          <ul className="checkout-details">
-            {plan.details.map((detail) => (
-              <li key={detail}>{detail}</li>
-            ))}
-          </ul>
-          <div className="checkout-total">
-            <span>Due today</span>
-            <strong>{formatBusinessCurrency(plan.price)}</strong>
-          </div>
-          <div className="checkout-payment">
-            <p className="eyebrow">PAYMENT METHODS</p>
-            <div className="payment-methods">
-              <span>Card</span>
-              <span>Apple Pay</span>
-              <span>Google Pay</span>
-              <span>Klarna / BNPL</span>
-            </div>
-            <p>
-              Available options can vary by device, browser, and region. Whop automatically surfaces
-              supported payment and financing options.
-            </p>
-          </div>
-          <p className="checkout-secure">Payments and financing are processed securely by Whop.</p>
-        </aside>
-      </div>
-    </main>
-  );
-}
-
-function Thanks() {
-  const searchParams = new URLSearchParams(window.location.search);
-  const planParam = searchParams.get('plan') as PlanKey | null;
-  const setupIntentId = searchParams.get('setup_intent_id');
-  const paymentId = searchParams.get('payment_id');
-
-  const isDeposit = planParam === 'deposit' || Boolean(setupIntentId);
-
-  return (
-    <main className="centered" style={themeStyle}>
-      <p className="eyebrow">{isDeposit ? 'DEPOSIT CONFIRMED • CARD SAVED' : 'PAYMENT RECEIVED'}</p>
-      <h1>
-        {isDeposit
-          ? 'Deposit Received & Card Saved on File'
-          : 'Thank you. We’ll be in touch shortly.'}
-      </h1>
-      <p
-        style={{
-          maxWidth: '32rem',
-          margin: '1rem auto 1.5rem',
-          color: '#64748b',
-          textAlign: 'center',
-        }}
-      >
-        {isDeposit
-          ? 'Your project start date is secured. In our high-ticket roofing workflow, your payment method is stored on file to automatically charge or invoice the final project balance upon job completion.'
-          : 'Your transaction has been processed securely via Whop Payments.'}
-      </p>
-      {paymentId && (
-        <p
-          style={{
-            fontSize: '0.85rem',
-            fontFamily: 'monospace',
-            color: '#64748b',
-            marginBottom: '0.5rem',
-          }}
-        >
-          Payment ID: {paymentId}
-        </p>
-      )}
-      {setupIntentId && (
-        <p
-          style={{
-            fontSize: '0.85rem',
-            fontFamily: 'monospace',
-            color: '#059669',
-            marginBottom: '0.5rem',
-          }}
-        >
-          Setup Intent ID: {setupIntentId} (Card saved)
-        </p>
-      )}
-      <div
-        style={{
-          display: 'flex',
-          gap: '1rem',
-          justifyContent: 'center',
-          marginTop: '1.5rem',
-          flexWrap: 'wrap',
-        }}
-      >
-        <a className="button" href="/">
-          Return Home
-        </a>
-        <a
-          className="button"
-          style={{ background: '#e8a838', color: '#111827' }}
-          href="/admin/invoices"
-        >
-          Demo Final Balance Billing (Invoices API) →
-        </a>
-      </div>
-    </main>
-  );
-}
-
-export default function App() {
-  if (window.location.pathname === '/checkout') return <Checkout />;
-  if (window.location.pathname === '/thanks') return <Thanks />;
-  return <Home />;
 }

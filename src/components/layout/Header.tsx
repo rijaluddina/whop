@@ -1,171 +1,86 @@
-import { useState, useEffect } from 'react';
-import { companyConfig } from '../../lib/config/company';
-import { Navigation } from './Navigation';
 
-const SCROLL_THRESHOLD = 20;
+import { businessConfig } from '../../lib/config/business';
 
-export interface HeaderProps {
-  className?: string;
+interface HeaderProps {
+  onOpenCheckout: (plan: any) => void;
+  onOpenInvoicesDemo: () => void;
+  onScrollTo: (id: string) => void;
 }
 
-export const Header = ({ className }: HeaderProps) => {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > SCROLL_THRESHOLD);
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
-
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const handleNavClick = () => {
-    setIsMobileMenuOpen(false);
-  };
-
-  const getLogoAbbreviation = (name: string): string => {
-    const words = name.trim().split(/\s+/);
-    if (words.length === 1) {
-      // For single-word names, use first 2-3 characters
-      return name.slice(0, 3).toUpperCase();
-    }
-    // For multi-word names, use first letter of each word
-    return words
-      .map((w) => w[0])
-      .join('')
-      .toUpperCase();
-  };
-
+export const Header = ({ onOpenCheckout, onOpenInvoicesDemo, onScrollTo }: HeaderProps) => {
   return (
-    <header
-      className={`
-        fixed top-0 left-0 right-0 z-50 transition-all duration-300
-        ${isScrolled ? 'bg-white/95 backdrop-blur-sm shadow-sm' : 'bg-transparent'}
-        ${className || ''}
-      `}
-      role="banner"
-    >
-      <div className="border-b border-[var(--color-border)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 md:h-20">
-            {/* Logo */}
-            <div className="flex items-center flex-shrink-0">
-              <a
-                href="#home"
-                className="flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2 rounded-lg"
-                aria-label={`${companyConfig.name} - Home`}
-              >
-                <svg
-                  className="w-8 h-8 text-[var(--color-primary)]"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                </svg>
-                <span className="text-xl font-bold text-[var(--color-primary)] hidden sm:block">
-                  {companyConfig.name}
-                </span>
-                <span className="text-lg font-bold text-[var(--color-primary)] sm:hidden">
-                  {getLogoAbbreviation(companyConfig.name)}
-                </span>
-              </a>
-            </div>
-
-            {/* Desktop Navigation */}
-            <Navigation className="hidden md:flex" onNavClick={handleNavClick} />
-
-            {/* Mobile Menu Button */}
-            <div className="flex items-center md:hidden">
-              <button
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="p-2 rounded-lg text-gray-600 hover:text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2 transition-colors"
-                aria-expanded={isMobileMenuOpen}
-                aria-controls="mobile-menu"
-                aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
-              >
-                {isMobileMenuOpen ? (
-                  <svg
-                    className="w-6 h-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                ) : (
-                  <svg
-                    className="w-6 h-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 6h16M4 12h16M4 18h16"
-                    />
-                  </svg>
-                )}
-              </button>
-            </div>
+    <>
+      <div className="top-emergency-bar">
+        <div className="top-bar-inner">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+              24/7 Storm Response • Emergency Hotline
+            </span>
+            <a href="tel:8005559119" style={{ color: 'inherit', textDecoration: 'none' }}>(800) 555-9119</a>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+            <button onClick={onOpenInvoicesDemo} style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', font: 'inherit' }}>Deposit → Final Invoice</button>
+            <a href="tel:800555ROOF" style={{ color: 'inherit', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+              </svg>
+              (800) 555-ROOF
+            </a>
           </div>
         </div>
       </div>
 
-      {/* Mobile Menu */}
-      {isMobileMenuOpen && (
-        <div
-          id="mobile-menu"
-          className="md:hidden bg-white border-b border-[var(--color-border)] animate-slide-down"
-          role="navigation"
-          aria-label="Mobile navigation"
-        >
-          <div className="px-4 py-4 space-y-2">
-            <Navigation className="flex flex-col space-x-0 space-y-1" onNavClick={handleNavClick} />
-            <div className="pt-4 border-t border-[var(--color-border)] flex flex-col space-y-3">
-              <a
-                href={`tel:${companyConfig.phone}`}
-                className="px-4 py-3 text-base font-medium text-[var(--color-primary)] bg-[var(--color-primary)]/10 rounded-lg text-center hover:bg-[var(--color-primary)]/20 transition-colors"
-              >
-                Call {companyConfig.phone}
-              </a>
-              <a
-                href={`mailto:${companyConfig.email}`}
-                className="px-4 py-3 text-base font-medium text-white bg-[var(--color-primary)] rounded-lg text-center hover:bg-[var(--color-primary)]/90 transition-colors"
-              >
-                Email Us
-              </a>
+      <header className="main-navbar">
+        <div className="navbar-inner">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: '0.75rem',
+                background: 'linear-gradient(135deg, #f59e0b, #ea580c)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#020617',
+                fontWeight: 900,
+              }}
+            >
+              AS
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontWeight: 800, fontSize: '1.125rem', lineHeight: 1 }}>Apex Shield Roofing</span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Certified Contractors • Lifetime Protection</span>
             </div>
           </div>
+
+          <nav className="nav-links">
+            <button onClick={() => onScrollTo('services')} className="nav-link">Services</button>
+            <button onClick={() => onScrollTo('plans')} className="nav-link">Fixed Plans & Pricing</button>
+            <button onClick={() => onScrollTo('financing')} className="nav-link">0% APR Financing</button>
+            <button onClick={() => onScrollTo('service-area')} className="nav-link">Service Area</button>
+            <button onClick={() => onScrollTo('reviews')} className="nav-link">Reviews</button>
+          </nav>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <button onClick={() => onScrollTo('contact')} className="btn btn-secondary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                <circle cx="12" cy="10" r="3" />
+              </svg>
+              Free Estimate
+            </button>
+            <button onClick={() => onOpenCheckout({ type: 'inspection', name: '21-Point Drone & Attic Roof Inspection', price: 149, tag: 'INSPECTION', tagline: 'Certified Drone & Hail Inspections', details: ['High-resolution drone imagery', 'Attic & ventilation inspection', '21-point checklist', 'Insurance-ready PDF report'], depositTerms: null, planId: businessConfig.plans.inspection.whopPlanId })} className="btn btn-primary btn-sm">
+              Book Drone Inspection ($149)
+            </button>
+          </div>
         </div>
-      )}
-    </header>
+      </header>
+    </>
   );
 };
-
-Header.displayName = 'Header';

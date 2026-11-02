@@ -1,50 +1,54 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta
-      name="description"
-      content="Apex Roofing — repairs, replacements, and inspections in Central Illinois."
-    />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <title>Apex Roofing | Springfield, IL</title>
-    <!-- Whop Pixel Tracking -->
+    <meta name="theme-color" content="#020617" />
+    
+    <meta name="description" content="Certified commercial and residential roofing contractors. Lifetime architectural shingle replacement, emergency leak repair, and 21-point drone roof inspections. Flexible 0% APR financing via Whop." />
+
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ea580c'><polygon points='12 2 2 12 5 12 5 22 19 22 19 12 22 12 12 2'/></svg>" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
+
+    <!-- Whop CDN: faster element boot -->
+    <link rel="preconnect" href="https://cdn.whop.com" />
+    <link rel="preconnect" href="https://api.whop.com" />
+
+    <!--
+      Whop Element script. On Whop Websites this is served from Whop's own
+      infrastructure; loading it here keeps local development identical.
+    -->
+    <script src="https://cdn.whop.com/elements/amber/elements.js" data-whop-elements async></script>
+
+    <!--
+      Official Whop Pixel snippet (docs.whop.com/developer/ads/pixel).
+      It defines window.whop with a queue, loads https://t.whop.tw/s.js, and
+      no-ops if Whop already injected the pixel — which it does on whop.site.
+      Vite substitutes biz_LHN26NTWx9YO5m at build time; the scope must be
+      queued before s.js loads, which is why it is set inline rather than from
+      React.
+    -->
     <script>
-      !(function (w, d, s, u, n, a, b) {
-        if (w[n]) return;
-        a = w[n] = {
-          q: [],
-          t: +new Date(),
-          s: [],
-          o: u,
-          track: function () {
-            a.q.push([+new Date()].concat([].slice.call(arguments)));
-          },
-          setScope: function () {
-            a.s = [].slice.call(arguments).filter(function (x) {
-              return typeof x === 'string';
-            });
-            a.q.push([+new Date(), 'setScope'].concat(a.s));
-          },
-          scope: function () {
-            var c = [].slice.call(arguments);
-            return {
-              track: function () {
-                a.q.push([+new Date()].concat([].slice.call(arguments)).concat([{ __scope: c }]));
-              },
-            };
-          },
-        };
-        b = d.createElement(s);
-        b.async = 1;
-        b.src = u + '/s.js';
-        d.getElementsByTagName(s)[0].parentNode.insertBefore(b, d.getElementsByTagName(s)[0]);
-      })(window, document, 'script', 'https://t.whop.tw', 'whop');
+      !function(w,d,s,u,n,a,b){if(w[n])return;a=w[n]={q:[],t:+new Date,s:[],o:u,track:function(){a.q.push([+new Date].concat([].slice.call(arguments)))},setScope:function(){a.s=[].slice.call(arguments).filter(function(x){return typeof x==="string"});a.q.push([+new Date,"setScope"].concat(a.s))},scope:function(){var c=[].slice.call(arguments);return{track:function(){a.q.push([+new Date].concat([].slice.call(arguments)).concat([{__scope:c}]))}}}};b=d.createElement(s);b.async=1;b.src=u+"/s.js";d.getElementsByTagName(s)[0].parentNode.insertBefore(b,d.getElementsByTagName(s)[0])}(window,document,"script","https://t.whop.tw","whop");
     </script>
+    <script>
+      (function () {
+        var accountId = "biz_LHN26NTWx9YO5m";
+        if (typeof accountId === "string" && accountId.indexOf("biz_") === 0 && window.whop && typeof window.whop.setScope === "function") {
+          window.whop.setScope(accountId);
+        }
+      })();
+    </script>
+
+    <title>Apex Shield Roofing</title>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script src="https://static.cloudflareinsights.com/beacon.min.js/vce701823e78c4301a35b7e07294d87301792088814092" integrity="sha512-UKNk8GbxkABxKcXYuLkO16EleLGUkcvJWtpSNmExE0Too3ZaFAxTscNWEc1OdAv5/BikHawapSCaiD2XCmp+Bw==" data-cf-beacon='{"version":"2024.11.0","token":"af16ab2b7acf44f8849a48ada5d42bd4","r":1,"spa":2}' crossorigin="anonymous"></script>
   </body>
 </html>
