@@ -56,7 +56,7 @@ export const PixelDebugger = () => {
           <div className="pixel-debugger-head">
             <div>
               <span className="pixel-debugger-title">whop.track events</span>
-              <span className="pixel-debugger-sub">PRODUCTION · biz_LHN26NTWx9YO5m</span>
+              <span className="pixel-debugger-sub">Whop Live · biz_LHN26NTWx9YO5m</span>
             </div>
             <span className="pixel-status is-live">
               <svg
@@ -111,7 +111,7 @@ export const PixelDebugger = () => {
               <polyline points="15 3 21 3 21 9" />
               <line x1="10" y1="14" x2="21" y2="3" />
             </svg>
-            Verify the same events in Whop Dashboard → Websites
+            Verify the same events in Whop Dashboard → Events
           </a>
         </div>
       )}

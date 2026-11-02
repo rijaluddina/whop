@@ -23,22 +23,14 @@ export const CheckoutModal = ({ isOpen, plan, onClose }: any) => {
   const elements = useMemo(() => loadWhop(), []);
 
   useEffect(() => {
-    if (isOpen && plan) {
-      trackEvent('service_viewed', {
+    if (isOpen && plan && plan.type === 'deposit') {
+      trackEvent('deposit_started', {
         plan_id: plan.planId,
         plan_name: plan.name,
         value: plan.price,
         currency: 'USD',
+        final_invoice_estimated: plan.depositTerms?.finalInvoiceEstimated,
       });
-      if (plan.type === 'deposit') {
-        trackEvent('deposit_started', {
-          plan_id: plan.planId,
-          plan_name: plan.name,
-          value: plan.price,
-          currency: 'USD',
-          final_invoice_estimated: plan.depositTerms?.finalInvoiceEstimated,
-        });
-      }
     }
   }, [isOpen, plan]);
 
