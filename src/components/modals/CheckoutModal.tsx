@@ -25,16 +25,17 @@ export const CheckoutModal = ({ isOpen, plan, onClose }: any) => {
   useEffect(() => {
     if (isOpen && plan) {
       trackEvent('service_viewed', {
-        service: plan.name,
-        service_type: plan.type,
-        price: plan.price,
         plan_id: plan.planId,
+        plan_name: plan.name,
+        value: plan.price,
+        currency: 'USD',
       });
       if (plan.type === 'deposit') {
         trackEvent('deposit_started', {
-          service: plan.name,
-          amount: plan.price,
           plan_id: plan.planId,
+          plan_name: plan.name,
+          value: plan.price,
+          currency: 'USD',
           final_invoice_estimated: plan.depositTerms?.finalInvoiceEstimated,
         });
       }
