@@ -11,7 +11,20 @@ import { Contact } from './components/sections/Contact';
 import { CheckoutModal } from './components/modals/CheckoutModal';
 import { InvoicesModal } from './components/modals/InvoicesModal';
 import { PixelDebugger } from './components/modals/PixelDebugger';
+import { InvoiceConsole } from './components/console/InvoiceConsole';
+import { LeadConsole } from './components/console/LeadConsole';
+import { PixelConsole } from './components/console/PixelConsole';
 import { trackEvent } from './lib/tracking';
+
+const EXPERIENCE_INVOICE = '/hub/exp_ORsFI0oQ0idUBO';
+const EXPERIENCE_LEAD = '/hub/exp_lwCZRXodbz56vG';
+const EXPERIENCE_PIXEL = '/hub/exp_wFsRMd3RWEdBoz';
+
+const CONSOLE_VIEWS: Record<string, JSX.Element> = {
+  [EXPERIENCE_INVOICE]: <InvoiceConsole />,
+  [EXPERIENCE_LEAD]: <LeadConsole />,
+  [EXPERIENCE_PIXEL]: <PixelConsole />,
+};
 
 export default function App() {
   const [checkoutPlan, setCheckoutPlan] = useState<any>(null);
@@ -56,6 +69,8 @@ export default function App() {
     if (el) el.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const consoleView = CONSOLE_VIEWS[window.location.pathname] ?? null;
+
   return (
     <div className="min-h-screen app-shell">
       {toast && (
@@ -91,32 +106,41 @@ export default function App() {
           <span>{toast.message}</span>
         </div>
       )}
-      <Header
-        onOpenCheckout={setCheckoutPlan}
-        onOpenInvoicesDemo={() => setInvoicesOpen(true)}
-        onScrollTo={scrollTo}
-      />
-      <main className="flex-1">
-        <Hero onOpenCheckout={setCheckoutPlan} onScrollTo={scrollTo} />
-        <Services onScrollTo={scrollTo} />
-        <Plans onOpenCheckout={setCheckoutPlan} onOpenInvoicesDemo={() => setInvoicesOpen(true)} />
-        <Financing onScrollTo={scrollTo} />
-        <ServiceArea />
-        <Reviews />
-        <Contact />
-      </main>
-      <Footer onScrollTo={scrollTo} onOpenInvoicesDemo={() => setInvoicesOpen(true)} />
-      <CheckoutModal
-        isOpen={!!checkoutPlan}
-        plan={checkoutPlan}
-        onClose={() => setCheckoutPlan(null)}
-      />
-      <InvoicesModal
-        isOpen={invoicesOpen}
-        depositReceipt={depositReceipt}
-        onClose={() => setInvoicesOpen(false)}
-      />
-      <PixelDebugger />
+      {consoleView ? (
+        consoleView
+      ) : (
+        <>
+          <Header
+            onOpenCheckout={setCheckoutPlan}
+            onOpenInvoicesDemo={() => setInvoicesOpen(true)}
+            onScrollTo={scrollTo}
+          />
+          <main className="flex-1">
+            <Hero onOpenCheckout={setCheckoutPlan} onScrollTo={scrollTo} />
+            <Services onScrollTo={scrollTo} />
+            <Plans
+              onOpenCheckout={setCheckoutPlan}
+              onOpenInvoicesDemo={() => setInvoicesOpen(true)}
+            />
+            <Financing onScrollTo={scrollTo} />
+            <ServiceArea />
+            <Reviews />
+            <Contact />
+          </main>
+          <Footer onScrollTo={scrollTo} onOpenInvoicesDemo={() => setInvoicesOpen(true)} />
+          <CheckoutModal
+            isOpen={!!checkoutPlan}
+            plan={checkoutPlan}
+            onClose={() => setCheckoutPlan(null)}
+          />
+          <InvoicesModal
+            isOpen={invoicesOpen}
+            depositReceipt={depositReceipt}
+            onClose={() => setInvoicesOpen(false)}
+          />
+          <PixelDebugger />
+        </>
+      )}
     </div>
   );
 }
