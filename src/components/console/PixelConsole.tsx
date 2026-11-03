@@ -3,10 +3,13 @@ import { ConsoleLayout } from './ConsoleLayout';
 
 interface EventItem {
   id?: string;
-  name?: string;
-  properties?: Record<string, unknown>;
-  created_at?: string;
-  timestamp?: string;
+  event_name?: string;
+  custom_name?: string;
+  event_time?: string;
+  value?: number | null;
+  currency?: string | null;
+  person_id?: string;
+  user?: { name?: string; email?: string; phone?: string };
 }
 
 interface ConsoleApiResponse<T> {
@@ -32,7 +35,11 @@ export const PixelConsole = () => {
     fetch(url)
       .then((r) => r.json())
       .then((data: ConsoleApiResponse<EventItem>) => {
-        if (!cancelled) setEvents(Array.isArray(data.data) ? data.data : []);
+        if (!cancelled) {
+          const all = Array.isArray(data.data) ? data.data : [];
+          // Show only whop.track custom events (pixel.custom with custom_name)
+          setEvents(all.filter((ev) => ev.custom_name));
+        }
         if (!cancelled && data.error) setError(data.error);
       })
       .catch(() => {
@@ -47,7 +54,7 @@ export const PixelConsole = () => {
   }, [range.from, range.to]);
 
   const eventTime = (ev: EventItem) => {
-    const ts = ev.created_at ?? ev.timestamp ?? ev.id ?? '';
+    const ts = ev.event_time ?? ev.id ?? '';
     try {
       return new Date(ts).toLocaleString('id-ID', {
         day: '2-digit',
@@ -59,6 +66,20 @@ export const PixelConsole = () => {
     } catch {
       return '-';
     }
+  };
+
+  const eventLabel = (ev: EventItem) => {
+    if (ev.custom_name) return `whop.track("${ev.custom_name}")`;
+    return ev.event_name ?? '-';
+  };
+
+  const payloadText = (ev: EventItem) => {
+    const parts: string[] = [];
+    if (ev.value != null) parts.push(`value: ${ev.value}`);
+    if (ev.currency) parts.push(`currency: ${ev.currency}`);
+    if (ev.person_id) parts.push(`person: ${ev.person_id}`);
+    if (parts.length > 0) return `{ ${parts.join(', ')} }`;
+    return '{}';
   };
 
   return (
@@ -130,16 +151,19 @@ export const PixelConsole = () => {
               </thead>
               <tbody className="divide-y divide-slate-700/50">
                 {events.map((ev) => (
-                  <tr key={ev.id || ev.name} className="hover:bg-slate-800/50 transition group">
+                  <tr
+                    key={ev.id || ev.event_name}
+                    className="hover:bg-slate-800/50 transition group"
+                  >
                     <td className="px-4 py-3 text-slate-500 text-xs">{eventTime(ev)}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.5)]" />
-                        <span className="text-slate-200 font-mono text-xs">{ev.name}</span>
+                        <span className="text-slate-200 font-mono text-xs">{eventLabel(ev)}</span>
                       </div>
                     </td>
                     <td className="px-4 py-3 text-slate-300 text-xs font-mono max-w-[420px] truncate">
-                      {JSON.stringify(ev.properties ?? {})}
+                      {payloadText(ev)}
                     </td>
                   </tr>
                 ))}
