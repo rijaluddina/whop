@@ -67,8 +67,11 @@ function normalizeLead(body: Record<string, unknown>): LeadBody | null {
   const phone = (body.phone || body.phoneNumber || '') as string;
   const service = (body.service || body.primaryService || body.serviceType || '') as string;
   const address = (body.address || body.streetAddress || body.propertyAddress || '') as string;
-  const message =
-    (body.message || body.projectDetails || body.notes || body.stormDamageNotes || '') as string;
+  const message = (body.message ||
+    body.projectDetails ||
+    body.notes ||
+    body.stormDamageNotes ||
+    '') as string;
 
   if (!name.trim() || !email.trim() || !phone.trim() || !service.trim()) {
     return null;
@@ -156,6 +159,19 @@ async function handleLead(request: Request, env: Env) {
         referrer_url: request.headers.get('referer') ?? undefined,
       })
       .catch((error) => console.error('Whop lead event failed', error));
+
+    // Notify the business owner that a new estimate request landed.
+    try {
+      await whop.notifications.create({
+        account_id: accountId,
+        title: 'New estimate request',
+        content: `${lead.name} requested an estimate for ${lead.service} (${lead.email}, ${lead.phone}).`,
+        rest_path: '/exp_lwCZRXodbz56vG',
+      });
+    } catch (error) {
+      // Non-fatal: the lead is already recorded; surface in logs only.
+      console.error('Whop owner notification failed', error);
+    }
 
     return json({ id: leadRecord.id, success: true }, 201);
   } catch (error) {
@@ -449,6 +465,49 @@ function getPublicConfig(env: Env) {
   };
 }
 
+async function handleGetInvoices(_request: Request, env: Env) {
+  const whop = whopClient(env);
+  const page = await whop.invoices.list({
+    account_id: env.APEX_WHOP_ACCOUNT_ID,
+    first: 50,
+  });
+  return json({
+    data: page.data ?? [],
+    ...(page.page_info ? { page_info: page.page_info } : {}),
+  });
+}
+
+async function handleGetLeads(_request: Request, env: Env) {
+  const whop = whopClient(env);
+  const page = await whop.leads.list({
+    account_id: env.APEX_WHOP_ACCOUNT_ID,
+    first: 50,
+  });
+  return json({
+    data: page.data ?? [],
+    ...(page.page_info ? { page_info: page.page_info } : {}),
+  });
+}
+
+async function handleGetEvents(request: Request, env: Env) {
+  const url = new URL(request.url);
+  const from =
+    url.searchParams.get('from') || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const to = url.searchParams.get('to') || new Date().toISOString();
+  const whop = whopClient(env);
+  const page = await whop.events.list({
+    account_id: env.APEX_WHOP_ACCOUNT_ID,
+    from,
+    to,
+    first: 100,
+    direction: 'desc',
+  });
+  return json({
+    data: page.data ?? [],
+    ...(page.page_info ? { page_info: page.page_info } : {}),
+  });
+}
+
 export default {
   async fetch(request: Request, env: Env) {
     const url = new URL(request.url);
@@ -511,10 +570,31 @@ export default {
         return json({ message: 'Unable to create the Whop invoice.' }, 502);
       }
     }
-    if (
-      pathname === '/admin/invoices' &&
-      (request.method === 'GET' || request.method === 'POST')
-    ) {
+    if (pathname === '/api/invoices' && request.method === 'GET') {
+      try {
+        return await handleGetInvoices(request, env);
+      } catch (error) {
+        console.error('List invoices failed', error);
+        return json({ data: [], error: 'Unable to list invoices.' }, 502);
+      }
+    }
+    if (pathname === '/api/leads' && request.method === 'GET') {
+      try {
+        return await handleGetLeads(request, env);
+      } catch (error) {
+        console.error('List leads failed', error);
+        return json({ data: [], error: 'Unable to list leads.' }, 502);
+      }
+    }
+    if (pathname === '/api/events' && request.method === 'GET') {
+      try {
+        return await handleGetEvents(request, env);
+      } catch (error) {
+        console.error('List events failed', error);
+        return json({ data: [], error: 'Unable to list events.' }, 502);
+      }
+    }
+    if (pathname === '/admin/invoices' && (request.method === 'GET' || request.method === 'POST')) {
       try {
         return await handleAdminInvoices(request, env);
       } catch (error) {
