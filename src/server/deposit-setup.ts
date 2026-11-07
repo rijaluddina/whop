@@ -1,0 +1,51 @@
+import { whopOwnerRequest } from './whop-owner'
+
+export async function findSavedProjectMethod(id: string, accountId: string, apiKey: string) {
+  if (!/^sint_[A-Za-z0-9]+$/.test(id)) return
+  const setup = await whopOwnerRequest(`/setup_intents/${id}`, apiKey)
+  const { metadata } = setup
+  const memberId = setup.member_id ?? setup.member?.id
+  const methodId = setup.payment_method_id ?? setup.payment_method?.id
+  if (
+    setup.id !== id || setup.status !== 'succeeded' ||
+    metadata?.source !== 'roofing_deposit_setup' ||
+    typeof metadata.project !== 'string' || !metadata.project ||
+    typeof metadata.customer_id !== 'string' || !/^user_[A-Za-z0-9]+$/.test(metadata.customer_id) ||
+    typeof memberId !== 'string' || !/^mber_[A-Za-z0-9]+$/.test(memberId) ||
+    typeof methodId !== 'string' || !/^payt_[A-Za-z0-9]+$/.test(methodId)
+  ) return
+
+  const member = await whopOwnerRequest(`/members/${memberId}`, apiKey)
+  if (
+    member.id !== memberId || (member.account_id ?? member.company?.id) !== accountId ||
+    (member.user_id ?? member.user?.id) !== metadata.customer_id
+  ) return
+
+  return { project: metadata.project, userId: metadata.customer_id, memberId, methodId }
+}
+
+export async function findPaidProjectDeposit(
+  id: string,
+  accountId: string,
+  apiKey: string,
+  depositPlanId: string,
+) {
+  if (!/^pay_[A-Za-z0-9]+$/.test(id)) return
+  const payment = await whopOwnerRequest(`/payments/${id}`, apiKey)
+  const { metadata } = payment
+  if (
+    payment.id !== id || payment.status !== 'paid' || payment.substatus !== 'succeeded' ||
+    (payment.account_id ?? payment.company?.id) !== accountId ||
+    (payment.variant_id ?? payment.plan?.id) !== depositPlanId ||
+    payment.refunded_at || Number(payment.refunded_amount ?? 0) !== 0 ||
+    metadata?.source !== 'roofing_project_deposit' ||
+    typeof metadata.setup_intent_id !== 'string'
+  ) return
+
+  const setup = await findSavedProjectMethod(metadata.setup_intent_id, accountId, apiKey)
+  if (
+    !setup || setup.project !== metadata.project || setup.userId !== metadata.customer_id ||
+    setup.memberId !== (payment.member_id ?? payment.member?.id)
+  ) return
+  return setup
+}
