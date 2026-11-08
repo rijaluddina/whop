@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { estimateServices, roofAges } from '../demo-config'
+import { whopApiBase, whopApiHeaders } from '../server/whop-api'
 import { getWhopUserId } from '../server/whop-auth'
 
 export const Route = createFileRoute('/api/estimate')({
@@ -32,18 +33,16 @@ export const Route = createFileRoute('/api/estimate')({
           (insuranceClaim !== undefined && insuranceClaim !== 'yes')
         ) return new Response(null, { status: 400 })
 
-        const { WHOP_API_KEY, WHOP_ACCOUNT_ID } = process.env
-        if (!WHOP_API_KEY || !WHOP_ACCOUNT_ID) return new Response(null, { status: 503 })
+        const { WHOP_ACCOUNT_ID } = process.env
+        if (!WHOP_ACCOUNT_ID) return new Response(null, { status: 503 })
 
         try {
-          const result = await fetch('https://api.whop.com/api/v1/leads', {
+          const result = await fetch(`${whopApiBase}/leads`, {
             method: 'POST',
-            headers: {
-              Authorization: `Bearer ${WHOP_API_KEY}`,
+            headers: whopApiHeaders({
               'Content-Type': 'application/json',
-              'Api-Version-Date': '2026-10-24',
               'Idempotency-Key': `estimate-${userId}-${requestId}`,
-            },
+            }),
             body: JSON.stringify({
               account_id: WHOP_ACCOUNT_ID,
               user_id: userId,

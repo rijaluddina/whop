@@ -3,6 +3,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { demoPlans } from '../demo-config'
 import { findPaidProjectDeposit } from '../server/deposit-setup'
 import { ownerPage } from '../server/owner-page'
+import { whopApiBase, whopApiHeaders } from '../server/whop-api'
 import { getOwnerAccess, whopOwnerRequest } from '../server/whop-owner'
 
 type Invoice = {
@@ -48,7 +49,7 @@ export const Route = createFileRoute('/$owner/invoice')({
             return ownerPage(title, <p>Confirm the invoice before proceeding.</p>, 400)
           }
           try {
-            const invoice: Invoice = await whopOwnerRequest(`/invoices/${id}`, access.apiKey)
+            const invoice: Invoice = await whopOwnerRequest(`/invoices/${id}`)
             const eligible = action === 'charge' ? canChargeSavedMethod(invoice) : canSendManually(invoice)
             if (invoice.id !== id || !eligible || invoice.total?.amount !== form.get('amountConfirmed')) {
               return ownerPage(title, <p>The draft changed or is no longer eligible. Review it before retrying.</p>, 409)
@@ -56,7 +57,7 @@ export const Route = createFileRoute('/$owner/invoice')({
             if (action === 'charge') {
               const depositId = invoice.metadata?.deposit_payment_id
               const saved = depositId && await findPaidProjectDeposit(
-                depositId, access.accountId, access.apiKey, demoPlans.deposit.id,
+                depositId, access.accountId, demoPlans.deposit.id,
               )
               if (!saved || saved.project !== invoice.metadata?.project ||
                 saved.methodId !== invoice.payment_method_id || saved.memberId !== invoice.member_id) {
@@ -66,14 +67,12 @@ export const Route = createFileRoute('/$owner/invoice')({
               return ownerPage(title, <p>The recipient changed. Review the draft before retrying.</p>, 409)
             }
             const operation = action === 'charge' ? 'issue' : 'send'
-            const result = await fetch(`https://api.whop.com/api/v1/invoices/${id}/${operation}`, {
+            const result = await fetch(`${whopApiBase}/invoices/${id}/${operation}`, {
               method: 'POST',
-              headers: {
-                Authorization: `Bearer ${access.apiKey}`,
-                'Api-Version-Date': '2026-10-24',
+              headers: whopApiHeaders({
                 'Content-Type': 'application/json',
                 'Idempotency-Key': `roofing-${operation}-${id}`,
-              },
+              }),
               body: '{}',
               signal: AbortSignal.timeout(10000),
             })
@@ -101,19 +100,17 @@ export const Route = createFileRoute('/$owner/invoice')({
 
         try {
           const saved = usesSavedMethod
-            ? await findPaidProjectDeposit(depositId, access.accountId, access.apiKey, demoPlans.deposit.id)
+            ? await findPaidProjectDeposit(depositId, access.accountId, demoPlans.deposit.id)
             : undefined
           if (usesSavedMethod && (!saved || saved.project !== project.trim())) {
             return ownerPage(title, <p>The deposit and saved method could not be verified for this project.</p>, 409)
           }
-          const response = await fetch('https://api.whop.com/api/v1/invoices', {
+          const response = await fetch(`${whopApiBase}/invoices`, {
             method: 'POST',
-            headers: {
-              Authorization: `Bearer ${access.apiKey}`,
+            headers: whopApiHeaders({
               'Content-Type': 'application/json',
-              'Api-Version-Date': '2026-10-24',
               'Idempotency-Key': `roofing-invoice-${saved ? depositId : requestId}`,
-            },
+            }),
             body: JSON.stringify({
               account_id: access.accountId,
               ...(saved
@@ -151,7 +148,7 @@ export const Route = createFileRoute('/$owner/invoice')({
         const cursor = new URL(request.url).searchParams.get('after')
         if (cursor && cursor.length <= 512) query.set('after', cursor)
         try {
-          const result = await whopOwnerRequest(`/invoices?${query}`, access.apiKey)
+          const result = await whopOwnerRequest(`/invoices?${query}`)
           const invoices: Invoice[] = result.data
           const next = result.page_info?.has_next_page && result.page_info.end_cursor
           return ownerPage(title, <>

@@ -15,7 +15,7 @@ export const Route = createFileRoute('/$owner/leads')({
         const cursor = new URL(request.url).searchParams.get('after')
         if (cursor && cursor.length <= 512) query.set('after', cursor)
         try {
-          const result = await whopOwnerRequest(`/leads?${query}`, access.apiKey)
+          const result = await whopOwnerRequest(`/leads?${query}`)
           const leads = result.data.filter((lead: Lead) => lead.metadata?.source === 'roofing_estimate') as Lead[]
           const next = result.page_info?.has_next_page && result.page_info.end_cursor
           return ownerPage('Estimate requests', <>

@@ -35,7 +35,7 @@ export const Route = createFileRoute('/$owner/pixel')({
         query.set('hostname', hostname)
 
         try {
-          const result = await whopOwnerRequest(`/events?${query}`, access.apiKey)
+          const result = await whopOwnerRequest(`/events?${query}`)
           const events: PixelEvent[] = result.data
           return ownerPage(title, <>
             <p>Latest 25 matching events Whop returned for {hostname} in the past seven days.</p>

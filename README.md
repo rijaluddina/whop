@@ -26,7 +26,9 @@ Untuk menguji fitur server secara lokal, isi file `.dev.vars` dengan konfigurasi
 | `OWNER_ROUTE_SLUG` | Slug dashboard pilihan operator, berisi huruf, angka, atau tanda hubung |
 | `WHOP_PIXEL_HOSTNAME` | Hostname situs, tanpa protokol atau path |
 
-Gunakan izin API sesuai endpoint yang dipakai. Alur invoice native memerlukan izin baca pembayaran, penagihan, pembuatan plan inline, dan baca email member untuk konfirmasi penerima. Alur lead memerlukan izin baca dan kelola lead beserta izin baca member dan produk. Tambahkan izin checkout configuration, setup intent, member, dan event sesuai dokumentasi endpoint.
+`WHOP_ACCOUNT_ID` dan `WHOP_API_KEY` hanya untuk pengembangan lokal. Di runtime hosted Whop, `WHOP_ACCOUNT_ID` disuntikkan otomatis dan panggilan API server-side ditandatangani proxy runtime dengan key milik app — lihat [Hosting](https://docs.whop.com/developer/websites/hosting.md). Karena itu keduanya tidak diset sebagai secret produksi oleh `scripts/set-production-secrets.sh`.
+
+Gunakan izin API sesuai endpoint yang dipakai. Daftar lengkap izin yang dibutuhkan site ini tersimpan di [scripts/app-permissions.json](scripts/app-permissions.json) dan bisa diterapkan dengan `pnpm exec whop apps permissions <app_id> --requested_permissions "$(cat scripts/app-permissions.json)"` (butuh login `whop login --method api-key` yang memiliki izin `developer:update_app_authorization`, atau atur dari dashboard). Alur invoice native memerlukan izin baca pembayaran, penagihan, pembuatan plan inline, dan baca email member untuk konfirmasi penerima. Alur lead memerlukan izin baca dan kelola lead beserta izin baca member dan produk. Tambahkan izin checkout configuration, setup intent, member, dan event sesuai dokumentasi endpoint.
 
 ## Deploy di Whop
 

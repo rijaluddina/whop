@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { demoPlans } from '../demo-config'
 import { findSavedProjectMethod } from '../server/deposit-setup'
+import { whopApiBase, whopApiHeaders } from '../server/whop-api'
 import { getWhopUserId } from '../server/whop-auth'
 
 export const Route = createFileRoute('/api/project-deposit')({
@@ -21,19 +22,17 @@ export const Route = createFileRoute('/api/project-deposit')({
           return new Response(null, { status: 400, headers })
         }
 
-        const { WHOP_ACCOUNT_ID, WHOP_API_KEY } = process.env
-        if (!WHOP_ACCOUNT_ID || !WHOP_API_KEY) return new Response(null, { status: 503, headers })
+        const { WHOP_ACCOUNT_ID } = process.env
+        if (!WHOP_ACCOUNT_ID) return new Response(null, { status: 503, headers })
         try {
-          const setup = await findSavedProjectMethod(setupId, WHOP_ACCOUNT_ID, WHOP_API_KEY)
+          const setup = await findSavedProjectMethod(setupId, WHOP_ACCOUNT_ID)
           if (setup?.userId !== userId) return new Response(null, { status: 403, headers })
-          const response = await fetch('https://api.whop.com/api/v1/checkout_configurations', {
+          const response = await fetch(`${whopApiBase}/checkout_configurations`, {
             method: 'POST',
-            headers: {
-              Authorization: `Bearer ${WHOP_API_KEY}`,
+            headers: whopApiHeaders({
               'Content-Type': 'application/json',
-              'Api-Version-Date': '2026-10-24',
               'Idempotency-Key': `roofing-deposit-${setupId}`,
-            },
+            }),
             body: JSON.stringify({
               account_id: WHOP_ACCOUNT_ID,
               mode: 'payment',

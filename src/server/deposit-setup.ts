@@ -1,8 +1,8 @@
 import { whopOwnerRequest } from './whop-owner'
 
-export async function findSavedProjectMethod(id: string, accountId: string, apiKey: string) {
+export async function findSavedProjectMethod(id: string, accountId: string) {
   if (!/^sint_[A-Za-z0-9]+$/.test(id)) return
-  const setup = await whopOwnerRequest(`/setup_intents/${id}`, apiKey)
+  const setup = await whopOwnerRequest(`/setup_intents/${id}`)
   const { metadata } = setup
   const memberId = setup.member_id ?? setup.member?.id
   const methodId = setup.payment_method_id ?? setup.payment_method?.id
@@ -15,7 +15,7 @@ export async function findSavedProjectMethod(id: string, accountId: string, apiK
     typeof methodId !== 'string' || !/^payt_[A-Za-z0-9]+$/.test(methodId)
   ) return
 
-  const member = await whopOwnerRequest(`/members/${memberId}`, apiKey)
+  const member = await whopOwnerRequest(`/members/${memberId}`)
   if (
     member.id !== memberId || (member.account_id ?? member.company?.id) !== accountId ||
     (member.user_id ?? member.user?.id) !== metadata.customer_id
@@ -27,11 +27,10 @@ export async function findSavedProjectMethod(id: string, accountId: string, apiK
 export async function findPaidProjectDeposit(
   id: string,
   accountId: string,
-  apiKey: string,
   depositPlanId: string,
 ) {
   if (!/^pay_[A-Za-z0-9]+$/.test(id)) return
-  const payment = await whopOwnerRequest(`/payments/${id}`, apiKey)
+  const payment = await whopOwnerRequest(`/payments/${id}`)
   const { metadata } = payment
   if (
     payment.id !== id || payment.status !== 'paid' || payment.substatus !== 'succeeded' ||
@@ -44,7 +43,7 @@ export async function findPaidProjectDeposit(
     typeof metadata.setup_intent_id !== 'string'
   ) return
 
-  const setup = await findSavedProjectMethod(metadata.setup_intent_id, accountId, apiKey)
+  const setup = await findSavedProjectMethod(metadata.setup_intent_id, accountId)
   if (
     !setup || setup.project !== metadata.project || setup.userId !== metadata.customer_id ||
     setup.memberId !== (payment.member_id ?? payment.member?.id)

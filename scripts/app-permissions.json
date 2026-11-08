@@ -1,0 +1,20 @@
+[
+ {"action":"checkout_configuration:create","is_required":true,"justification":"Creates a one-time checkout configuration when a customer pays for a service or a project deposit."},
+ {"action":"checkout_configuration:basic:read","is_required":true,"justification":"Confirms a checkout configuration was created for the right business before sending the customer to it."},
+ {"action":"plan:create","is_required":true,"justification":"Creates the inline one-time variant used as the line item on a final balance invoice."},
+ {"action":"access_pass:create","is_required":true,"justification":"Required by Whop checkout configuration creation for the services sold on this site."},
+ {"action":"access_pass:update","is_required":true,"justification":"Required by Whop checkout configuration creation for the services sold on this site."},
+ {"action":"access_pass:basic:read","is_required":true,"justification":"Links estimate requests to the catalog of the business that owns this site."},
+ {"action":"lead:manage","is_required":true,"justification":"Saves the estimate request form as a lead so the operator can follow up."},
+ {"action":"lead:basic:read","is_required":true,"justification":"Lists estimate requests on the operator leads dashboard page."},
+ {"action":"member:email:read","is_required":true,"justification":"Reads the customer email so the final balance invoice is addressed correctly."},
+ {"action":"member:basic:read","is_required":true,"justification":"Verifies a paid deposit and its saved payment method belong to the project customer."},
+ {"action":"member:journey:read","is_required":true,"justification":"Shows recent tracking events on the operator pixel status page."},
+ {"action":"payment:setup_intent:read","is_required":true,"justification":"Verifies the customer finished saving a payment method before the deposit checkout opens."},
+ {"action":"payment:basic:read","is_required":true,"justification":"Checks deposit payment status and lists invoices on the operator invoice page."},
+ {"action":"payment:charge","is_required":true,"justification":"Charges the saved payment method for a final balance invoice the operator issued."},
+ {"action":"invoice:create","is_required":true,"justification":"Creates the draft invoice for the project remaining balance after the deposit."},
+ {"action":"invoice:update","is_required":true,"justification":"Sends the final balance invoice to the customer from the operator invoice page."},
+ {"action":"company:basic:read","is_required":true,"justification":"Confirms server calls target the business that owns this site."},
+ {"action":"company:balance:read","is_required":true,"justification":"Confirms the runtime credential belongs to this business before showing owner pages."}
+]
