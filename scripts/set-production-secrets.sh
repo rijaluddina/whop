@@ -1,25 +1,31 @@
 #!/usr/bin/env bash
 # Set production secrets for the Whop app via `whop apps secrets set`.
 #
-# Fill in the two FILL-IN values below, log in with `pnpm exec whop auth login`,
-# then run: bash scripts/set-production-secrets.sh
+# 1. Create a .secrets.local file (git-ignored) next to .dev.vars with:
+#      WHOP_CLIENT_SECRET=<client secret from whop.com/dashboard/developer → your app → OAuth>
+#      WHOP_WEBHOOK_SECRET=<ws_... from scripts/register-webhook.sh or the dashboard>
+# 2. Log in with `pnpm exec whop auth login`.
+# 3. Run: bash scripts/set-production-secrets.sh
 #
-# Values are reused from .dev.vars where the same setting already exists locally,
-# so production and local testing stay consistent. Edit .dev.vars first if the
-# operator password or dashboard slug should differ in production.
+# Values can also be passed as environment variables, e.g.
+#   WHOP_CLIENT_SECRET=... WHOP_WEBHOOK_SECRET=... bash scripts/set-production-secrets.sh
+#
+# Other values are reused from .dev.vars where the same setting already exists
+# locally, so production and local testing stay consistent. Edit .dev.vars first
+# if the operator password or dashboard slug should differ in production.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-# ---- FILL-IN -----------------------------------------------------------
-WHOP_CLIENT_SECRET=''    # FILL-IN: whop.com/dashboard/developer → your app → OAuth client secret
-WHOP_WEBHOOK_SECRET=''   # FILL-IN: ws_... from webhook creation (dashboard, or scripts/register-webhook.sh)
 SITE_DOMAIN="${SITE_DOMAIN:-the-curiosity-labs.whop.site}"
-# ------------------------------------------------------------------------
+
+local_var() { { grep -E "^$1=" .secrets.local 2>/dev/null || true; } | head -1 | cut -d= -f2-; }
+WHOP_CLIENT_SECRET="${WHOP_CLIENT_SECRET:-$(local_var WHOP_CLIENT_SECRET)}"
+WHOP_WEBHOOK_SECRET="${WHOP_WEBHOOK_SECRET:-$(local_var WHOP_WEBHOOK_SECRET)}"
 
 missing=0
 for required in WHOP_CLIENT_SECRET WHOP_WEBHOOK_SECRET; do
   if [[ -z ${!required} ]]; then
-    echo "Missing $required — fill in the FILL-IN block at the top of this script." >&2
+    echo "Missing $required — put it in .secrets.local (WHOP_CLIENT_SECRET=..., WHOP_WEBHOOK_SECRET=ws_...) or export it." >&2
     missing=1
   fi
 done

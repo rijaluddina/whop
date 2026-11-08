@@ -31,7 +31,7 @@ Gunakan izin API sesuai endpoint yang dipakai. Alur invoice native memerlukan iz
 ## Deploy di Whop
 
 1. Jalankan `pnpm exec whop auth login` dan pastikan akun yang aktif memiliki akses ke app yang tertera di `whop.app.json`.
-2. Daftarkan URL callback produksi di pengaturan OAuth app. Masukkan konfigurasi produksi melalui `pnpm exec whop apps secrets set` — `scripts/set-production-secrets.sh` mengisi seluruh secret sekaligus; isi bagian FILL-IN di skripnya terlebih dahulu. Jangan masukkan nilai secret ke repository.
+2. Daftarkan URL callback produksi di pengaturan OAuth app. Masukkan konfigurasi produksi melalui `pnpm exec whop apps secrets set` — `scripts/set-production-secrets.sh` mengisi seluruh secret sekaligus; letakkan `WHOP_CLIENT_SECRET` dan `WHOP_WEBHOOK_SECRET` di file `.secrets.local` (tidak di-track git) terlebih dahulu. Jangan masukkan nilai secret ke repository.
 3. Jalankan `pnpm exec whop apps deploy`. Gunakan `pnpm exec whop apps builds list` untuk memeriksa build.
 4. Daftarkan webhook produksi ke `/api/whop-webhook` dengan event `setup_intent.succeeded`, `payment.succeeded`, dan `payment.failed`. `scripts/register-webhook.sh` mendaftarkannya lewat API, mem-pin `api_version_date` 2026-10-24 agar payload cocok dengan pembacaan REST app, dan menampilkan secret penandatangan sekali.
 
