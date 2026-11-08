@@ -41,6 +41,7 @@ export const Route = createFileRoute('/api/estimate')({
             headers: {
               Authorization: `Bearer ${WHOP_API_KEY}`,
               'Content-Type': 'application/json',
+              'Api-Version-Date': '2026-10-24',
               'Idempotency-Key': `estimate-${userId}-${requestId}`,
             },
             body: JSON.stringify({

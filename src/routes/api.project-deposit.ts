@@ -37,7 +37,8 @@ export const Route = createFileRoute('/api/project-deposit')({
             body: JSON.stringify({
               account_id: WHOP_ACCOUNT_ID,
               mode: 'payment',
-              variant_id: demoPlans.deposit.id,
+              // Pinned to 2026-10-24: the plan_id → variant_id rename landed in 2026-10-27-2.
+              plan_id: demoPlans.deposit.id,
               metadata: {
                 source: 'roofing_project_deposit',
                 customer_id: userId,

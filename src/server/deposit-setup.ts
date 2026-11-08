@@ -36,8 +36,10 @@ export async function findPaidProjectDeposit(
   if (
     payment.id !== id || payment.status !== 'paid' || payment.substatus !== 'succeeded' ||
     (payment.account_id ?? payment.company?.id) !== accountId ||
-    (payment.variant_id ?? payment.plan?.id) !== depositPlanId ||
-    payment.refunded_at || Number(payment.refunded_amount ?? 0) !== 0 ||
+    // Pinned to 2026-10-24: payments carry plan_id; variant_id arrived with 2026-10-27-2.
+    (payment.plan_id ?? payment.variant_id) !== depositPlanId ||
+    // refunded_amount is a Money object ({ amount, currency }), null when nothing was refunded.
+    payment.refunded_at || Number(payment.refunded_amount?.amount ?? 0) !== 0 ||
     metadata?.source !== 'roofing_project_deposit' ||
     typeof metadata.setup_intent_id !== 'string'
   ) return
