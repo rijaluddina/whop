@@ -46,17 +46,20 @@ export function startWhopLogin(request: Request) {
   if (!settings) return new Response('Whop sign-in is unavailable.', { status: 503 })
   const verifier = randomBytes(32).toString('base64url')
   const state = randomBytes(24).toString('base64url')
+  const nonce = randomBytes(16).toString('base64url')
   const params = new URLSearchParams({
     client_id: settings.clientId,
     redirect_uri: settings.redirectUri,
     response_type: 'code',
     scope: 'openid',
     state,
+    // Whop's authorize endpoint rejects openid requests without a nonce.
+    nonce,
     code_challenge: createHash('sha256').update(verifier).digest('base64url'),
     code_challenge_method: 'S256',
   })
   const destination = returnPath(new URL(request.url).searchParams.get('returnTo'))
-  writeCookie(transactionCookie, `${state}.${verifier}.${destination}`, 600, settings.secure)
+  writeCookie(transactionCookie, `${state}.${verifier}.${nonce}.${destination}`, 600, settings.secure)
   return Response.redirect(`${oauth}/authorize?${params}`, 303)
 }
 
@@ -65,9 +68,9 @@ export async function finishWhopLogin(request: Request) {
   if (!settings) return new Response('Whop sign-in is unavailable.', { status: 503 })
   const params = new URL(request.url).searchParams
   const code = params.get('code')
-  const [state, verifier, destination] = (getCookie(transactionCookie) ?? '').split('.')
+  const [state, verifier, nonce, destination] = (getCookie(transactionCookie) ?? '').split('.')
   writeCookie(transactionCookie, '', 0, settings.secure)
-  if (!code || !state || !verifier || state !== params.get('state')) {
+  if (!code || !state || !verifier || !nonce || state !== params.get('state')) {
     return new Response('Invalid sign-in request. Return to the site and try again.', { status: 400 })
   }
 

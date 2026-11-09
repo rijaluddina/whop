@@ -28,6 +28,7 @@ Website Whop yang dapat dipakai ulang untuk mempresentasikan layanan roofing, pe
 ## Fase 3 — Checkout dan tagihan
 
 - Buat plan one-time: inspeksi $149, deposit $500, dan gutter cleaning $299 sebagai harga demo; catat ID plan untuk konfigurasi.
+- Keputusan (2026-11-09, permintaan pemilik): `/checkout?service=deposit` sengaja me-render checkout deposit $500 secara langsung, tanpa alur simpan-metode-dahulu. Konsekuensinya, deposit yang dibayar dari halaman itu tidak memiliki metadata project/setup-intent, sehingga tidak dicocokkan oleh alur invoice saved-method (`findPaidProjectDeposit`) — invoice untuk deposit seperti itu memakai jalur email manual di dashboard owner. Alur setup intent tetap tersedia di kode untuk masa depan.
 - Implementasikan komponen checkout dan BrandingElement dari dokumentasi Whop. CheckoutElement dan ExpressCheckoutElement saling eksklusif dalam satu checkout handle; gunakan konfigurasi yang didukung, jangan mengasumsikan keduanya dapat berbagi handle.
 - Tambahkan persetujuan penyimpanan metode pembayaran dan ikuti alur setup intent yang telah dibuktikan. Pastikan deposit dikaitkan dengan pelanggan dan proyek yang benar.
 - Buat invoice sisa saldo melalui [Invoices API](https://docs.whop.com/developer/guides/invoices), dengan idempotensi, penanganan status, dan webhook terverifikasi. Tunjukkan pengiriman manual dan auto-charge bila tersedia dan disetujui pelanggan; jangan menganggap pembuatan invoice berarti pembayaran berhasil.
