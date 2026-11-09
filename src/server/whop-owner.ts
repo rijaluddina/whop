@@ -6,7 +6,10 @@ export async function whopOwnerRequest(path: string, apiKey?: string) {
     headers: whopApiHeaders(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
     signal: AbortSignal.timeout(10000),
   })
-  if (!response.ok) throw new Error('Whop request failed')
+  if (!response.ok) {
+    console.error('Whop API request failed:', response.status, path)
+    throw new Error('Whop request failed')
+  }
   return response.json()
 }
 
