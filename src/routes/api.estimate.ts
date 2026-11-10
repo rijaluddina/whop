@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { estimateServices, roofAges } from '../demo-config'
-import { whopApiBase, whopApiHeaders } from '../server/whop-api'
+import { createEstimateLead } from '../server/estimate-lead'
 import { getWhopUserId } from '../server/whop-auth'
 import { sendEstimateConfirmation } from '../server/estimate-email'
 
@@ -39,35 +39,32 @@ export const Route = createFileRoute('/api/estimate')({
         if (!WHOP_ACCOUNT_ID) return new Response(null, { status: 503 })
 
         try {
-          const result = await fetch(`${whopApiBase}/leads`, {
-            method: 'POST',
-            headers: whopApiHeaders({
-              'Content-Type': 'application/json',
-              'Idempotency-Key': `estimate-${userId}-${requestId}`,
-            }),
-            body: JSON.stringify({
-              account_id: WHOP_ACCOUNT_ID,
-              user_id: userId,
-              metadata: { source: 'roofing_estimate', name: name.trim(), email: email.trim(), service, phone, zip, details: details.trim(), address: address?.trim() ?? '', roofAge: roofAge ?? "I don't know", insuranceClaim: insuranceClaim === 'yes' },
-            }),
-            signal: AbortSignal.timeout(10000),
+          const leadId = await createEstimateLead(WHOP_ACCOUNT_ID, userId, {
+            source: 'roofing_estimate',
+            name: name.trim(),
+            email: email.trim(),
+            service,
+            phone,
+            zip,
+            details: details.trim(),
+            address: address?.trim() ?? '',
+            roofAge: roofAge ?? "I don't know",
+            insuranceClaim: insuranceClaim === 'yes',
           })
-          if (result.ok) {
-            const lead = await result.json()
-            if (typeof lead.id === 'string' && /^lead_[A-Za-z0-9]+$/.test(lead.id)) {
-              const emailSent = await sendEstimateConfirmation(`${userId}/${requestId}`, email.trim(), {
-                name: name.trim(),
-                service,
-                zip,
-                address: address?.trim() || undefined,
-                roofAge: roofAge ?? "I don't know",
-                insuranceClaim: insuranceClaim === 'yes',
-              })
-              return Response.json({ leadId: lead.id, emailSent }, { headers: { 'Cache-Control': 'private, no-store' } })
-            }
+          if (leadId) {
+            const emailSent = await sendEstimateConfirmation(`${userId}/${requestId}`, email.trim(), {
+              name: name.trim(),
+              service,
+              zip,
+              address: address?.trim() || undefined,
+              roofAge: roofAge ?? "I don't know",
+              insuranceClaim: insuranceClaim === 'yes',
+            })
+            return Response.json({ leadId, emailSent }, { headers: { 'Cache-Control': 'private, no-store' } })
           }
         } catch {
-          // A retry with the same request ID can recover a timed-out submission.
+          // Whop keeps one lead per user, so a resubmission re-resolves to the
+          // same lead instead of duplicating it.
         }
         return new Response(null, { status: 502 })
       },
