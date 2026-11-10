@@ -17,6 +17,7 @@ type Invoice = {
   member_id?: string | null
   payment_method_id?: string | null
   email_address?: string | null
+  billing_address?: { country?: string | null } | null
   metadata?: { source?: string; project?: string; service?: string; deposit_payment_id?: string }
   total?: { amount: string; currency: string }
 }
@@ -30,6 +31,69 @@ function canChargeSavedMethod(invoice: Invoice) {
   return invoice.status === 'draft' && invoice.metadata?.source === 'roofing_final_balance' &&
     Boolean(invoice.metadata.deposit_payment_id && invoice.payment_method_id && invoice.member_id) &&
     invoice.total?.currency.toLowerCase() === 'usd' && Number(invoice.total.amount) > 0
+}
+
+type BillingAddress = {
+  name?: string
+  line1: string
+  line2?: string
+  city: string
+  state?: string
+  postal_code: string
+  country: string
+}
+
+// Whop refuses to send or charge an invoice whose tax it cannot resolve
+// (invoice_tax_address_required), so every draft carries the customer's billing
+// address. Returns undefined when the submitted address is incomplete.
+function readBillingAddress(form: FormData | null): BillingAddress | undefined {
+  const value = (name: string) => {
+    const raw = form?.get(name)
+    return typeof raw === 'string' ? raw.trim() : ''
+  }
+  const field = (name: string, max: number) => {
+    const raw = value(name)
+    return raw && raw.length <= max ? raw : undefined
+  }
+  const country = value('billingCountry').toUpperCase()
+  const line1 = field('billingLine1', 200)
+  const city = field('billingCity', 100)
+  const state = field('billingState', 100)
+  const postalCode = field('billingPostalCode', 20)
+  if (!line1 || !city || !postalCode || !/^[A-Z]{2}$/.test(country)) return
+  if (country === 'US' && !state) return
+  return {
+    ...(field('billingName', 100) && { name: field('billingName', 100) }),
+    line1,
+    ...(field('billingLine2', 200) && { line2: field('billingLine2', 200) }),
+    city,
+    ...(state && { state }),
+    postal_code: postalCode,
+    country,
+  }
+}
+
+// POSTs to Whop and records what Whop actually said when it refuses, so the
+// owner page reports a real reason instead of a bare 502 and the app logs keep
+// the upstream status. Callers render the reason they were thrown.
+async function whopPost(path: string, body: string, idempotencyKey: string) {
+  const response = await fetch(`${whopApiBase}${path}`, {
+    method: 'POST',
+    headers: whopApiHeaders({ 'Content-Type': 'application/json', 'Idempotency-Key': idempotencyKey }),
+    body,
+    signal: AbortSignal.timeout(10000),
+  })
+  if (!response.ok) {
+    const detail = await response.text().catch(() => '')
+    throw new Error(`Whop rejected ${path} with HTTP ${response.status}${detail ? ` — ${detail.slice(0, 240)}` : ''}`)
+  }
+  return response.json()
+}
+
+function failedPage(title: string, message: string, error: unknown) {
+  const reason = error instanceof Error ? error.message : String(error)
+  console.error(`Whop invoice call failed: ${reason}`)
+  return ownerPage(title, <p>{message}<br /><small>{reason.slice(0, 240)}</small></p>, 502)
 }
 
 export const Route = createFileRoute('/$owner/invoice')({
@@ -58,6 +122,10 @@ export const Route = createFileRoute('/$owner/invoice')({
             if (invoice.id !== id || !eligible || invoice.total?.amount !== form.get('amountConfirmed')) {
               return ownerPage(title, <p>The draft changed or is no longer eligible. Review it before retrying.</p>, 409)
             }
+            // Whop cannot tax a draft without an address (invoice_tax_address_required).
+            if (!invoice.billing_address?.country) {
+              return ownerPage(title, <p>This draft has no billing address, so Whop cannot calculate its tax. Create a new draft with the customer's billing address.</p>, 409)
+            }
             if (action === 'charge') {
               const depositId = invoice.metadata?.deposit_payment_id
               const saved = depositId && await findPaidProjectDeposit(
@@ -71,19 +139,10 @@ export const Route = createFileRoute('/$owner/invoice')({
               return ownerPage(title, <p>The recipient changed. Review the draft before retrying.</p>, 409)
             }
             const operation = action === 'charge' ? 'issue' : 'send'
-            const result = await fetch(`${whopApiBase}/invoices/${id}/${operation}`, {
-              method: 'POST',
-              headers: whopApiHeaders({
-                'Content-Type': 'application/json',
-                'Idempotency-Key': `roofing-${operation}-${id}`,
-              }),
-              body: '{}',
-              signal: AbortSignal.timeout(10000),
-            })
-            if (!result.ok) throw new Error('Whop did not confirm the invoice action')
+            await whopPost(`/invoices/${id}/${operation}`, '{}', `roofing-${operation}-${id}`)
             return new Response(null, { status: 303, headers: { Location: url.pathname, 'Cache-Control': 'no-store' } })
-          } catch {
-            return ownerPage(title, <p>Whop did not confirm the invoice action. Check the invoice status before retrying.</p>, 502)
+          } catch (error) {
+            return failedPage(title, 'Whop did not confirm the invoice action. Check the invoice status before retrying.', error)
           }
         }
         const email = form?.get('email')
@@ -104,6 +163,9 @@ export const Route = createFileRoute('/$owner/invoice')({
           typeof requestId !== 'string' || !/^[0-9a-f-]{36}$/.test(requestId)
         ) return ownerPage(title, <p>Check the customer email, project reference, and balance.</p>, 400)
 
+        const billing = readBillingAddress(form)
+        if (!billing) return ownerPage(title, <p>Check the customer's billing address — Whop needs it to calculate the tax on the balance.</p>, 400)
+
         try {
           const saved = usesSavedMethod
             ? await findPaidProjectDeposit(depositId, access.accountId, demoPlans.deposit.id)
@@ -111,37 +173,28 @@ export const Route = createFileRoute('/$owner/invoice')({
           if (usesSavedMethod && (!saved || saved.project !== project.trim())) {
             return ownerPage(title, <p>The deposit and saved method could not be verified for this project.</p>, 409)
           }
-          const response = await fetch(`${whopApiBase}/invoices`, {
-            method: 'POST',
-            headers: whopApiHeaders({
-              'Content-Type': 'application/json',
-              'Idempotency-Key': `roofing-invoice-${saved ? depositId : requestId}`,
-            }),
-            body: JSON.stringify({
-              account_id: access.accountId,
-              ...(saved
-                ? { member_id: saved.memberId, payment_method_id: saved.methodId }
-                : { email_address: email }),
-              memo: `Roofing final balance · ${service}${project.trim() ? ` · ${project.trim()}` : ''}`,
-              metadata: {
-                source: 'roofing_final_balance',
-                project: project.trim(),
-                service,
-                ...(saved && { deposit_payment_id: depositId }),
-              },
-              items: [{
-                plan: { title: 'Roofing final balance', plan_type: 'one_time', initial_price: Number(amount), currency: 'usd' },
-                quantity: 1,
-              }],
-            }),
-            signal: AbortSignal.timeout(10000),
-          })
-          if (!response.ok) throw new Error('Whop rejected the invoice draft')
-          const draft = await response.json()
+          const draft = await whopPost('/invoices', JSON.stringify({
+            account_id: access.accountId,
+            ...(saved
+              ? { member_id: saved.memberId, payment_method_id: saved.methodId }
+              : { email_address: email }),
+            billing_address: billing,
+            memo: `Roofing final balance · ${service}${project.trim() ? ` · ${project.trim()}` : ''}`,
+            metadata: {
+              source: 'roofing_final_balance',
+              project: project.trim(),
+              service,
+              ...(saved && { deposit_payment_id: depositId }),
+            },
+            items: [{
+              plan: { title: 'Roofing final balance', plan_type: 'one_time', initial_price: Number(amount), currency: 'usd' },
+              quantity: 1,
+            }],
+          }), `roofing-invoice-${saved ? depositId : requestId}`)
           if (draft.status !== 'draft' || typeof draft.id !== 'string') throw new Error('Draft was not confirmed')
           return new Response(null, { status: 303, headers: { Location: url.pathname, 'Cache-Control': 'no-store' } })
-        } catch {
-          return ownerPage(title, <p>Whop did not confirm the draft. Check the invoice list before creating another draft.</p>, 502)
+        } catch (error) {
+          return failedPage(title, 'Whop did not confirm the draft. Check the invoice list before creating another draft.', error)
         }
       },
       GET: async ({ params, request }) => {
@@ -173,6 +226,14 @@ export const Route = createFileRoute('/$owner/invoice')({
               <p><label>Service <select name="service" required defaultValue=""><option value="" disabled>Select a service</option>{estimateServices.map(service => <option key={service} value={service}>{service}</option>)}</select></label></p>
               <p><label>Project reference (required for a saved method) <input name="project" maxLength={100} /></label></p>
               <p><label>Remaining balance (USD) <input name="amount" type="number" min="0.01" max="99999.99" step="0.01" required /></label></p>
+              <p>Whop requires the customer's billing address to calculate the tax on the balance.</p>
+              <p><label>Name on the address (optional) <input name="billingName" maxLength={100} /></label></p>
+              <p><label>Street address <input name="billingLine1" required maxLength={200} /></label></p>
+              <p><label>Street address line 2 (optional) <input name="billingLine2" maxLength={200} /></label></p>
+              <p><label>City <input name="billingCity" required maxLength={100} /></label></p>
+              <p><label>State or province <input name="billingState" required maxLength={100} /></label></p>
+              <p><label>ZIP or postal code <input name="billingPostalCode" required maxLength={20} /></label></p>
+              <p><label>Country (ISO 3166-1 alpha-2) <input name="billingCountry" required maxLength={2} defaultValue="US" /></label></p>
               <p>For manual payment, enter the customer email. To draft against a saved method, enter the paid deposit ID.</p>
               <p><label>Paid deposit ID <input name="depositId" maxLength={100} /></label></p>
               <p><label><input type="checkbox" name="savedMethodConfirmed" value="yes" />
@@ -207,7 +268,8 @@ export const Route = createFileRoute('/$owner/invoice')({
             </table></div>}
             {typeof next === 'string' && <a className="page-link" href={`?${filter === 'all' ? '' : `status=${encodeURIComponent(filter)}&`}after=${encodeURIComponent(next)}`}>Older invoices →</a>}
           </>)
-        } catch {
+        } catch (error) {
+          console.error('Whop invoice list failed:', error instanceof Error ? error.message : error)
           return ownerPage(title, <p>Whop could not return invoices.</p>, 502)
         }
       },
