@@ -1,7 +1,7 @@
 // Live demo plans. Replace these IDs and scopes when configuring another business.
 export const demoPlans = {
   inspection: {
-    id: 'plan_oafUvGFxNuAwe',
+    id: 'plan_cBXkmGicP30XC',
     price: 149,
     name: '21-Point Drone & Attic Roof Inspection',
     includes: [
@@ -14,7 +14,7 @@ export const demoPlans = {
     scope: 'Inspection fee is credited once toward approved follow-up work. Repairs are quoted separately.',
   },
   deposit: {
-    id: 'plan_9mLax2QLO3yjh',
+    id: 'plan_2COSQXzAgQjgQ',
     price: 500,
     name: 'Project Work Deposit & Materials Lock',
     includes: [
@@ -27,7 +27,7 @@ export const demoPlans = {
     scope: 'Example: a $5,000 project minus a $500 deposit leaves $4,500 before applicable tax or approved changes.',
   },
   tuneUp: {
-    id: 'plan_vR7Ad8nzrzDEc',
+    id: 'plan_kxkaZyPyd2iR8',
     price: 799,
     name: 'Flat-Rate Roof Tune-Up & Storm Seal',
     includes: [

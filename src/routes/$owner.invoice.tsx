@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { createFileRoute } from '@tanstack/react-router'
-import { demoPlans } from '../demo-config'
+import { demoPlans, estimateServices } from '../demo-config'
 import { findPaidProjectDeposit } from '../server/deposit-setup'
 import { ownerPage } from '../server/owner-page'
 import { whopApiBase, whopApiHeaders } from '../server/whop-api'
@@ -10,10 +10,14 @@ type Invoice = {
   id: string
   status: string
   due_at?: string | null
+  created_at?: string
+  number?: string | null
+  overdue?: boolean
+  customer_name?: string | null
   member_id?: string | null
   payment_method_id?: string | null
   email_address?: string | null
-  metadata?: { source?: string; project?: string; deposit_payment_id?: string }
+  metadata?: { source?: string; project?: string; service?: string; deposit_payment_id?: string }
   total?: { amount: string; currency: string }
 }
 
@@ -89,11 +93,13 @@ export const Route = createFileRoute('/$owner/invoice')({
           ? /^pay_[A-Za-z0-9]+$/.test(depositId) && form?.get('savedMethodConfirmed') === 'yes'
           : typeof email === 'string' && email.length <= 254 && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)
         const project = form?.get('project')
+        const service = form?.get('service')
         const amount = form?.get('amount')
         const requestId = form?.get('requestId')
         if (
           !validCustomer ||
-          typeof project !== 'string' || !project.trim() || project.length > 100 ||
+          typeof service !== 'string' || !estimateServices.some(option => option === service) ||
+          typeof project !== 'string' || project.length > 100 || (usesSavedMethod && !project.trim()) ||
           typeof amount !== 'string' || !/^\d{1,5}(?:\.\d{1,2})?$/.test(amount) || Number(amount) <= 0 ||
           typeof requestId !== 'string' || !/^[0-9a-f-]{36}$/.test(requestId)
         ) return ownerPage(title, <p>Check the customer email, project reference, and balance.</p>, 400)
@@ -116,10 +122,11 @@ export const Route = createFileRoute('/$owner/invoice')({
               ...(saved
                 ? { member_id: saved.memberId, payment_method_id: saved.methodId }
                 : { email_address: email }),
-              memo: `Roofing final balance · ${project.trim()}`,
+              memo: `Roofing final balance · ${service}${project.trim() ? ` · ${project.trim()}` : ''}`,
               metadata: {
                 source: 'roofing_final_balance',
                 project: project.trim(),
+                service,
                 ...(saved && { deposit_payment_id: depositId }),
               },
               items: [{
@@ -140,25 +147,31 @@ export const Route = createFileRoute('/$owner/invoice')({
       GET: async ({ params, request }) => {
         const title = 'Invoices'
         const access = await getOwnerAccess(params.owner, request)
+        if (access.status === 404) return Response.redirect(new URL('/', request.url), 302)
         if (access.status === 401) return ownerPage(title, <p>Owner dashboard credentials are required.</p>, 401)
         if (access.status === 403) return ownerPage(title, <p>This page is restricted to the account owner.</p>, 403)
         if (access.status !== 200) return ownerPage(title, <p>Invoices are unavailable.</p>, access.status)
 
         const query = new URLSearchParams({ account_id: access.accountId, first: '25' })
-        const cursor = new URL(request.url).searchParams.get('after')
+        const paramsQuery = new URL(request.url).searchParams
+        const filter = paramsQuery.get('status') || 'all'
+        if (['draft', 'open', 'paid'].includes(filter)) query.set('status', filter)
+        if (filter === 'overdue') query.set('overdue', 'true')
+        const cursor = paramsQuery.get('after')
         if (cursor && cursor.length <= 512) query.set('after', cursor)
         try {
           const result = await whopOwnerRequest(`/invoices?${query}`)
           const invoices: Invoice[] = result.data
           const next = result.page_info?.has_next_page && result.page_info.end_cursor
           return ownerPage(title, <>
-            <form method="post">
+            <form className="panel" method="post">
               <h2>Draft a final balance invoice</h2>
               <p>Enter the amount still owed after applying the deposit and any approved changes. For example, a $5,000 project with a $500 deposit leaves a $4,500 balance before applicable tax.</p>
               <p>Review the draft before emailing its payment link or issuing a charge to an authorized saved method.</p>
               <input type="hidden" name="requestId" value={randomUUID()} />
               <p><label>Customer email <input type="email" name="email" maxLength={254} /></label></p>
-              <p><label>Project reference <input name="project" required maxLength={100} /></label></p>
+              <p><label>Service <select name="service" required defaultValue=""><option value="" disabled>Select a service</option>{estimateServices.map(service => <option key={service} value={service}>{service}</option>)}</select></label></p>
+              <p><label>Project reference (required for a saved method) <input name="project" maxLength={100} /></label></p>
               <p><label>Remaining balance (USD) <input name="amount" type="number" min="0.01" max="99999.99" step="0.01" required /></label></p>
               <p>For manual payment, enter the customer email. To draft against a saved method, enter the paid deposit ID.</p>
               <p><label>Paid deposit ID <input name="depositId" maxLength={100} /></label></p>
@@ -167,11 +180,16 @@ export const Route = createFileRoute('/$owner/invoice')({
               </label></p>
               <button type="submit">Create draft</button>
             </form>
-            {invoices.length === 0 ? <p>No invoices on this page.</p> : <table>
-              <thead><tr><th scope="col">Invoice ID</th><th scope="col">Status</th><th scope="col">Due date</th><th scope="col">Action</th></tr></thead>
+            <h2>Recent invoices</h2>
+            <nav className="filters" aria-label="Filter invoices">{[['all', 'All invoices'], ['draft', 'Draft'], ['open', 'Open'], ['overdue', 'Overdue'], ['paid', 'Paid']].map(([value, label]) => <a key={value} href={value === 'all' ? '?' : `?status=${value}`} aria-current={filter === value ? 'page' : undefined}>{label}</a>)}</nav>
+            {invoices.length === 0 ? <p className="empty">No invoices on this page.</p> : <div className="table-wrap"><table>
+              <thead><tr><th scope="col">Invoice</th><th scope="col">Customer</th><th scope="col">Amount</th><th scope="col">Status</th><th scope="col">Created</th><th scope="col">Due date</th><th scope="col">Action</th></tr></thead>
               <tbody>{invoices.map(invoice => <tr key={invoice.id}>
-                <th scope="row">{invoice.id}</th>
-                <td>{invoice.status}</td>
+                <th scope="row">{invoice.number || invoice.id}{invoice.metadata?.service && <><br /><small>{invoice.metadata.service}</small></>}</th>
+                <td>{invoice.email_address || invoice.customer_name || invoice.member_id || '—'}</td>
+                <td>{invoice.total ? `${invoice.total.amount} ${invoice.total.currency.toUpperCase()}` : '—'}</td>
+                <td>{invoice.overdue && invoice.status === 'open' ? 'Overdue' : invoice.status}</td>
+                <td>{invoice.created_at ? <time dateTime={invoice.created_at}>{invoice.created_at.slice(0, 10)}</time> : '—'}</td>
                 <td>{invoice.due_at ? <time dateTime={invoice.due_at}>{invoice.due_at.slice(0, 10)}</time> : '—'}</td>
                 <td>{(canSendManually(invoice) || canChargeSavedMethod(invoice)) && <form method="post">
                   <input type="hidden" name="action" value={canChargeSavedMethod(invoice) ? 'charge' : 'send'} />
@@ -186,8 +204,8 @@ export const Route = createFileRoute('/$owner/invoice')({
                   <button type="submit">{canChargeSavedMethod(invoice) ? 'Issue and charge saved method' : 'Email payment link'}</button>
                 </form>}</td>
               </tr>)}</tbody>
-            </table>}
-            {typeof next === 'string' && <p><a href={`?after=${encodeURIComponent(next)}`}>Older invoices</a></p>}
+            </table></div>}
+            {typeof next === 'string' && <a className="page-link" href={`?${filter === 'all' ? '' : `status=${encodeURIComponent(filter)}&`}after=${encodeURIComponent(next)}`}>Older invoices →</a>}
           </>)
         } catch {
           return ownerPage(title, <p>Whop could not return invoices.</p>, 502)

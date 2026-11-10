@@ -2,15 +2,15 @@
 # Register the production webhook via the Whop API and print the signing secret.
 # The secret (ws_...) is shown ONCE — copy it into scripts/set-production-secrets.sh.
 #
-# Requires the API key in .dev.vars to have the `developer:manage_webhook` scope.
+# Requires the Thrive Daily API key in .dev.thrive.local to have the `developer:manage_webhook` scope.
 # If the API rejects it, create the webhook in the Whop dashboard instead and copy
 # its signing secret from there.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-SITE_DOMAIN="${SITE_DOMAIN:-the-curiosity-labs.whop.site}"
-WHOP_API_KEY=$(grep -E '^WHOP_API_KEY=' .dev.vars | head -1 | cut -d= -f2-)
-[[ -n $WHOP_API_KEY ]] || { echo 'Missing WHOP_API_KEY in .dev.vars.' >&2; exit 1; }
+SITE_DOMAIN="${SITE_DOMAIN:-summit-roofing-thrive.whop.site}"
+WHOP_API_KEY=$(grep -E '^WHOP_API_KEY=' .dev.thrive.local | head -1 | cut -d= -f2-)
+[[ -n $WHOP_API_KEY ]] || { echo 'Missing WHOP_API_KEY in .dev.thrive.local.' >&2; exit 1; }
 
 curl -fsS https://api.whop.com/api/v1/webhooks \
   -H "Authorization: Bearer $WHOP_API_KEY" \

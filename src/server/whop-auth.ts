@@ -74,10 +74,11 @@ export async function finishWhopLogin(request: Request) {
     return new Response('Invalid sign-in request. Return to the site and try again.', { status: 400 })
   }
 
+  let stage = 'token exchange'
   try {
     const tokenResponse = await fetch(`${oauth}/token`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-whop-inject-key': 'none' },
       body: JSON.stringify({
         grant_type: 'authorization_code',
         client_id: settings.clientId,
@@ -88,22 +89,34 @@ export async function finishWhopLogin(request: Request) {
       }),
       signal: AbortSignal.timeout(10000),
     })
-    if (!tokenResponse.ok) throw new Error('Token exchange failed')
+    if (!tokenResponse.ok) {
+      const body = await tokenResponse.json().catch(() => ({})) as { error?: unknown }
+      const errors = ['invalid_request', 'invalid_client', 'invalid_grant', 'unauthorized_client', 'unsupported_grant_type', 'invalid_scope']
+      const error = typeof body.error === 'string' && errors.includes(body.error) ? body.error : 'unknown'
+      console.error('Whop OAuth token exchange failed:', tokenResponse.status, error)
+      throw new Error('Token exchange failed')
+    }
     const { access_token: token } = await tokenResponse.json()
     if (typeof token !== 'string' || !token) throw new Error('Missing access token')
+    stage = 'userinfo'
     const profileResponse = await fetch(`${oauth}/userinfo`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Authorization: `Bearer ${token}`, 'x-whop-inject-key': 'none' },
       signal: AbortSignal.timeout(10000),
     })
-    if (!profileResponse.ok) throw new Error('Userinfo failed')
+    if (!profileResponse.ok) {
+      console.error('Whop OAuth userinfo failed:', profileResponse.status)
+      throw new Error('Userinfo failed')
+    }
     const { sub } = await profileResponse.json()
     if (typeof sub !== 'string' || !/^user_[A-Za-z0-9]+$/.test(sub)) throw new Error('Invalid user ID')
 
+    stage = 'session'
     const maxAge = 900
     const value = `${sub}.${Date.now() + maxAge * 1000}`
     writeCookie(sessionCookie, `${value}.${signature(value, settings.secret)}`, maxAge, settings.secure)
     return new Response(null, { status: 303, headers: { Location: returnPath(destination), 'Cache-Control': 'no-store' } })
   } catch {
+    console.error('Whop OAuth failed at:', stage)
     return new Response('Whop sign-in failed. Return to the site and try again.', { status: 502 })
   }
 }

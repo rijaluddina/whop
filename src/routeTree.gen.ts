@@ -10,6 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SplatRouteImport } from './routes/$'
+import { Route as OwnerRouteImport } from './routes/$owner'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as OwnerInvoiceRouteImport } from './routes/$owner.invoice'
 import { Route as OwnerLeadsRouteImport } from './routes/$owner.leads'
@@ -26,25 +28,35 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SplatRoute = SplatRouteImport.update({
+  id: '/$',
+  path: '/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OwnerRoute = OwnerRouteImport.update({
+  id: '/$owner',
+  path: '/$owner',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CheckoutRoute = CheckoutRouteImport.update({
   id: '/checkout',
   path: '/checkout',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OwnerInvoiceRoute = OwnerInvoiceRouteImport.update({
-  id: '/$owner/invoice',
-  path: '/$owner/invoice',
-  getParentRoute: () => rootRouteImport,
+  id: '/invoice',
+  path: '/invoice',
+  getParentRoute: () => OwnerRoute,
 } as any)
 const OwnerLeadsRoute = OwnerLeadsRouteImport.update({
-  id: '/$owner/leads',
-  path: '/$owner/leads',
-  getParentRoute: () => rootRouteImport,
+  id: '/leads',
+  path: '/leads',
+  getParentRoute: () => OwnerRoute,
 } as any)
 const OwnerPixelRoute = OwnerPixelRouteImport.update({
-  id: '/$owner/pixel',
-  path: '/$owner/pixel',
-  getParentRoute: () => rootRouteImport,
+  id: '/pixel',
+  path: '/pixel',
+  getParentRoute: () => OwnerRoute,
 } as any)
 const ApiDepositSetupRoute = ApiDepositSetupRouteImport.update({
   id: '/api/deposit-setup',
@@ -79,6 +91,8 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/$': typeof SplatRoute
+  '/$owner': typeof OwnerRouteWithChildren
   '/checkout': typeof CheckoutRoute
   '/$owner/invoice': typeof OwnerInvoiceRoute
   '/$owner/leads': typeof OwnerLeadsRoute
@@ -92,6 +106,8 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/$': typeof SplatRoute
+  '/$owner': typeof OwnerRouteWithChildren
   '/checkout': typeof CheckoutRoute
   '/$owner/invoice': typeof OwnerInvoiceRoute
   '/$owner/leads': typeof OwnerLeadsRoute
@@ -106,6 +122,8 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/$': typeof SplatRoute
+  '/$owner': typeof OwnerRouteWithChildren
   '/checkout': typeof CheckoutRoute
   '/$owner/invoice': typeof OwnerInvoiceRoute
   '/$owner/leads': typeof OwnerLeadsRoute
@@ -121,6 +139,8 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/$'
+    | '/$owner'
     | '/checkout'
     | '/$owner/invoice'
     | '/$owner/leads'
@@ -134,6 +154,8 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/$'
+    | '/$owner'
     | '/checkout'
     | '/$owner/invoice'
     | '/$owner/leads'
@@ -147,6 +169,8 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/$'
+    | '/$owner'
     | '/checkout'
     | '/$owner/invoice'
     | '/$owner/leads'
@@ -161,10 +185,9 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  SplatRoute: typeof SplatRoute
+  OwnerRoute: typeof OwnerRouteWithChildren
   CheckoutRoute: typeof CheckoutRoute
-  OwnerInvoiceRoute: typeof OwnerInvoiceRoute
-  OwnerLeadsRoute: typeof OwnerLeadsRoute
-  OwnerPixelRoute: typeof OwnerPixelRoute
   ApiDepositSetupRoute: typeof ApiDepositSetupRoute
   ApiEstimateRoute: typeof ApiEstimateRoute
   ApiProjectDepositRoute: typeof ApiProjectDepositRoute
@@ -182,6 +205,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/$': {
+      id: '/$'
+      path: '/$'
+      fullPath: '/$'
+      preLoaderRoute: typeof SplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$owner': {
+      id: '/$owner'
+      path: '/$owner'
+      fullPath: '/$owner'
+      preLoaderRoute: typeof OwnerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/checkout': {
       id: '/checkout'
       path: '/checkout'
@@ -191,24 +228,24 @@ declare module '@tanstack/react-router' {
     }
     '/$owner/invoice': {
       id: '/$owner/invoice'
-      path: '/$owner/invoice'
+      path: '/invoice'
       fullPath: '/$owner/invoice'
       preLoaderRoute: typeof OwnerInvoiceRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof OwnerRoute
     }
     '/$owner/leads': {
       id: '/$owner/leads'
-      path: '/$owner/leads'
+      path: '/leads'
       fullPath: '/$owner/leads'
       preLoaderRoute: typeof OwnerLeadsRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof OwnerRoute
     }
     '/$owner/pixel': {
       id: '/$owner/pixel'
-      path: '/$owner/pixel'
+      path: '/pixel'
       fullPath: '/$owner/pixel'
       preLoaderRoute: typeof OwnerPixelRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof OwnerRoute
     }
     '/api/deposit-setup': {
       id: '/api/deposit-setup'
@@ -255,12 +292,25 @@ declare module '@tanstack/react-router' {
   }
 }
 
-const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  CheckoutRoute: CheckoutRoute,
+interface OwnerRouteChildren {
+  OwnerInvoiceRoute: typeof OwnerInvoiceRoute
+  OwnerLeadsRoute: typeof OwnerLeadsRoute
+  OwnerPixelRoute: typeof OwnerPixelRoute
+}
+
+const OwnerRouteChildren: OwnerRouteChildren = {
   OwnerInvoiceRoute: OwnerInvoiceRoute,
   OwnerLeadsRoute: OwnerLeadsRoute,
   OwnerPixelRoute: OwnerPixelRoute,
+}
+
+const OwnerRouteWithChildren = OwnerRoute._addFileChildren(OwnerRouteChildren)
+
+const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
+  SplatRoute: SplatRoute,
+  OwnerRoute: OwnerRouteWithChildren,
+  CheckoutRoute: CheckoutRoute,
   ApiDepositSetupRoute: ApiDepositSetupRoute,
   ApiEstimateRoute: ApiEstimateRoute,
   ApiProjectDepositRoute: ApiProjectDepositRoute,

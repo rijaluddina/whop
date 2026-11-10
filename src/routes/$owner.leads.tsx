@@ -7,6 +7,7 @@ export const Route = createFileRoute('/$owner/leads')({
     handlers: {
       GET: async ({ params, request }) => {
         const access = await getOwnerAccess(params.owner, request)
+        if (access.status === 404) return Response.redirect(new URL('/', request.url), 302)
         if (access.status === 401) return ownerPage('Estimate requests', <p>Owner dashboard credentials are required.</p>, 401)
         if (access.status === 403) return ownerPage('Estimate requests', <p>This page is restricted to the account owner.</p>, 403)
         if (access.status !== 200) return ownerPage('Estimate requests', <p>Estimate requests are unavailable.</p>, access.status)
@@ -19,19 +20,14 @@ export const Route = createFileRoute('/$owner/leads')({
           const leads = result.data.filter((lead: Lead) => lead.metadata?.source === 'roofing_estimate') as Lead[]
           const next = result.page_info?.has_next_page && result.page_info.end_cursor
           return ownerPage('Estimate requests', <>
-            {leads.length === 0 && <p>No estimate requests on this page.</p>}
-            {leads.map((lead) => <article key={lead.id}>
-              <h2>{String(lead.metadata?.name || lead.user?.name || lead.user?.email || lead.id)}</h2>
-              <p>{String(lead.metadata?.email || lead.user?.email || '')}</p>
-              {typeof lead.metadata?.service === 'string' && <p>Requested service: {lead.metadata.service}</p>}
-              <p>{String(lead.metadata?.phone ?? '')} · {String(lead.metadata?.zip ?? '')}</p>
-              <p>{String(lead.metadata?.details ?? '')}</p>
-              <p>Address: {String(lead.metadata?.address ?? 'Not provided')}</p>
-              <p>Roof age: {String(lead.metadata?.roofAge ?? 'Not provided')}</p>
-              <p>Insurance review requested: {lead.metadata?.insuranceClaim === true ? 'Yes' : 'No'}</p>
-              <p><time>{lead.created_at}</time></p>
-            </article>)}
-            {typeof next === 'string' && <a href={`?after=${encodeURIComponent(next)}`}>Older leads</a>}
+            {leads.length === 0 && <p className="empty">No estimate requests on this page.</p>}
+            <div className="lead-grid">{leads.map((lead) => <article className="lead-card" key={lead.id}>
+              <div className="lead-top"><div><p className="service">{String(lead.metadata?.service || 'Estimate request')}</p><h2>{String(lead.metadata?.name || lead.user?.name || lead.user?.email || lead.id)}</h2></div><time className="date" dateTime={lead.created_at}>{lead.created_at?.slice(0, 10)}</time></div>
+              <p className="contact">{String(lead.metadata?.email || lead.user?.email || 'Email not provided')} · {String(lead.metadata?.phone || 'Phone not provided')}</p>
+              <div className="details"><p><span>Address</span> {String(lead.metadata?.address || 'Not provided')}</p><p><span>ZIP code</span> {String(lead.metadata?.zip || 'Not provided')}</p><p><span>Roof age</span> {String(lead.metadata?.roofAge || 'Not provided')}</p><p><span>Insurance review</span> {lead.metadata?.insuranceClaim === true ? 'Yes' : 'No'}</p></div>
+              {Boolean(lead.metadata?.details) && <p className="message">{String(lead.metadata?.details)}</p>}
+            </article>)}</div>
+            {typeof next === 'string' && <a className="page-link" href={`?after=${encodeURIComponent(next)}`}>Older leads →</a>}
           </>)
         } catch {
           return ownerPage('Estimate requests', <p>Whop could not return the estimate requests.</p>, 502)

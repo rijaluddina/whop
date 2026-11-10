@@ -2,10 +2,12 @@ import { createFileRoute } from '@tanstack/react-router'
 import { estimateServices, roofAges } from '../demo-config'
 import { whopApiBase, whopApiHeaders } from '../server/whop-api'
 import { getWhopUserId } from '../server/whop-auth'
+import { sendEstimateConfirmation } from '../server/estimate-email'
 
 export const Route = createFileRoute('/api/estimate')({
   server: {
     handlers: {
+      GET: () => Response.json({ signedIn: Boolean(getWhopUserId()) }, { headers: { 'Cache-Control': 'private, no-store' } }),
       POST: async ({ request }) => {
         if (request.headers.get('origin') !== new URL(request.url).origin) {
           return new Response(null, { status: 403 })
@@ -53,7 +55,15 @@ export const Route = createFileRoute('/api/estimate')({
           if (result.ok) {
             const lead = await result.json()
             if (typeof lead.id === 'string' && /^lead_[A-Za-z0-9]+$/.test(lead.id)) {
-              return Response.json({ leadId: lead.id }, { headers: { 'Cache-Control': 'private, no-store' } })
+              const emailSent = await sendEstimateConfirmation(`${userId}/${requestId}`, email.trim(), {
+                name: name.trim(),
+                service,
+                zip,
+                address: address?.trim() || undefined,
+                roofAge: roofAge ?? "I don't know",
+                insuranceClaim: insuranceClaim === 'yes',
+              })
+              return Response.json({ leadId: lead.id, emailSent }, { headers: { 'Cache-Control': 'private, no-store' } })
             }
           }
         } catch {

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { estimateServices, roofAges } from '../demo-config'
 
@@ -6,7 +6,15 @@ export function EstimateForm() {
   const [status, setStatus] = useState('')
   const [sending, setSending] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [signedIn, setSignedIn] = useState(false)
   const attempt = useRef<{ values: string; id: string } | undefined>(undefined)
+
+  useEffect(() => {
+    fetch('/api/estimate', { cache: 'no-store' })
+      .then(response => response.ok ? response.json() : null)
+      .then(result => setSignedIn(result?.signedIn === true))
+      .catch(() => setSignedIn(false))
+  }, [])
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -26,6 +34,7 @@ export function EstimateForm() {
         body: JSON.stringify({ ...values, requestId: attempt.current.id }),
       })
       if (response.status === 401) {
+        setSignedIn(false)
         setStatus('Sign in with Whop before sending your estimate request.')
         return
       }
@@ -38,7 +47,9 @@ export function EstimateForm() {
       if (typeof result.leadId !== 'string') throw new Error('Missing lead ID')
       leadId = result.leadId
       setSubmitted(true)
-      setStatus('Your estimate request was received.')
+      setStatus(result.emailSent
+        ? 'Your estimate request was received. A confirmation email is on its way.'
+        : 'Your estimate request was received. We could not send a confirmation email.')
     } catch {
       setStatus('We could not confirm your request. Please try again.')
       return
@@ -51,8 +62,10 @@ export function EstimateForm() {
 
   return (
     <form className="mx-auto mt-6 grid max-w-md gap-4 text-left" method="post" action="/api/estimate" onSubmit={submit}>
-      <p className="text-sm">Sign in with Whop before sending your request.</p>
-      <a className="underline" href="/auth/login">Sign in with Whop</a>
+      {signedIn ? <p className="text-sm">Signed in with Whop.</p> : <>
+        <p className="text-sm">Sign in with Whop before sending your request.</p>
+        <a className="underline" href="/auth/login">Sign in with Whop</a>
+      </>}
       <label className="grid gap-1">
         Full name
         <input className="rounded border p-2" name="name" autoComplete="name" required maxLength={100} />

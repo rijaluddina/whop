@@ -25,6 +25,8 @@ Untuk menguji fitur server secara lokal, isi file `.dev.vars` dengan konfigurasi
 | `OWNER_DASHBOARD_PASSWORD` | Password acak minimal 32 karakter, khusus operator dashboard |
 | `OWNER_ROUTE_SLUG` | Slug dashboard pilihan operator, berisi huruf, angka, atau tanda hubung |
 | `WHOP_PIXEL_HOSTNAME` | Hostname situs, tanpa protokol atau path |
+| `RESEND_API_KEY` | API key Resend untuk email konfirmasi estimasi |
+| `ESTIMATE_EMAIL_FROM` | Alamat pengirim pada domain yang diverifikasi di Resend |
 
 `WHOP_ACCOUNT_ID` dan `WHOP_API_KEY` hanya untuk pengembangan lokal. Di runtime hosted Whop, `WHOP_ACCOUNT_ID` disuntikkan otomatis dan panggilan API server-side ditandatangani proxy runtime dengan key milik app — lihat [Hosting](https://docs.whop.com/developer/websites/hosting.md). Karena itu keduanya tidak diset sebagai secret produksi oleh `scripts/set-production-secrets.sh`.
 
@@ -33,8 +35,10 @@ Gunakan izin API sesuai endpoint yang dipakai. Daftar lengkap izin yang dibutuhk
 ## Deploy di Whop
 
 1. Jalankan `pnpm exec whop auth login` dan pastikan akun yang aktif memiliki akses ke app yang tertera di `whop.app.json`.
-2. Daftarkan URL callback produksi di pengaturan OAuth app. Masukkan konfigurasi produksi melalui `pnpm exec whop apps secrets set` — `scripts/set-production-secrets.sh` mengisi seluruh secret sekaligus; letakkan `WHOP_CLIENT_SECRET` dan `WHOP_WEBHOOK_SECRET` di file `.secrets.local` (tidak di-track git) terlebih dahulu. Jangan masukkan nilai secret ke repository.
+2. Daftarkan URL callback produksi di pengaturan OAuth app. Masukkan konfigurasi produksi melalui `pnpm exec whop apps secrets set` — `scripts/set-production-secrets.sh` menggunakan `.secrets.thrive.local` dan `.dev.thrive.local` yang tidak di-track git. Jangan masukkan nilai secret ke repository.
 3. Jalankan `pnpm exec whop apps deploy`. Gunakan `pnpm exec whop apps builds list` untuk memeriksa build.
 4. Daftarkan webhook produksi ke `/api/whop-webhook` dengan event `setup_intent.succeeded`, `payment.succeeded`, dan `payment.failed`. `scripts/register-webhook.sh` mendaftarkannya lewat API, mem-pin `api_version_date` 2026-10-24 agar payload cocok dengan pembacaan REST app, dan menampilkan secret penandatangan sekali.
 
 Buka `/<slug>/leads`, `/<slug>/invoice`, atau `/<slug>/pixel` langsung melalui HTTPS. Masukkan username `owner` dan password dashboard pada dialog browser. Akses ini memakai kredensial operator yang dikonfigurasi di server. Embed ditunda. Uji permintaan estimasi, setup metode pembayaran, pembayaran deposit, dan invoice pada sesi yang sesuai. Cek pembayaran dan event di Whop sebelum menganggap pengujian berhasil.
+
+Untuk email konfirmasi estimasi, verifikasi domain pengirim di Resend, isi `RESEND_API_KEY` dan `ESTIMATE_EMAIL_FROM` di `.secrets.thrive.local` (produksi, dikirim oleh `scripts/set-production-secrets.sh`) serta `.dev.vars` (pengembangan lokal). Lead tetap disimpan jika email tidak terkirim; form menampilkan status email secara terpisah. Resend menggunakan ID permintaan untuk mencegah email duplikat saat permintaan diulang.
