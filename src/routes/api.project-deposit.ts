@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { demoPlans } from '../demo-config'
 import { findSavedProjectMethod } from '../server/deposit-setup'
-import { whopApiBase, whopApiHeaders } from '../server/whop-api'
+import { whopAccountId, whopApiBase, whopApiHeaders } from '../server/whop-api'
 import { getWhopUserId } from '../server/whop-auth'
 
 export const Route = createFileRoute('/api/project-deposit')({
@@ -22,10 +22,9 @@ export const Route = createFileRoute('/api/project-deposit')({
           return new Response(null, { status: 400, headers })
         }
 
-        const { WHOP_ACCOUNT_ID } = process.env
-        if (!WHOP_ACCOUNT_ID) return new Response(null, { status: 503, headers })
+        if (!whopAccountId) return new Response(null, { status: 503, headers })
         try {
-          const setup = await findSavedProjectMethod(setupId, WHOP_ACCOUNT_ID)
+          const setup = await findSavedProjectMethod(setupId, whopAccountId)
           if (setup?.userId !== userId) return new Response(null, { status: 403, headers })
           const response = await fetch(`${whopApiBase}/checkout_configurations`, {
             method: 'POST',
@@ -34,7 +33,7 @@ export const Route = createFileRoute('/api/project-deposit')({
               'Idempotency-Key': `roofing-deposit-${setupId}`,
             }),
             body: JSON.stringify({
-              account_id: WHOP_ACCOUNT_ID,
+              account_id: whopAccountId,
               mode: 'payment',
               // Pinned to 2026-10-24: the plan_id → variant_id rename landed in 2026-10-27-2.
               plan_id: demoPlans.deposit.id,
@@ -49,7 +48,7 @@ export const Route = createFileRoute('/api/project-deposit')({
           })
           if (!response.ok) throw new Error('Checkout configuration failed')
           const configuration = await response.json()
-          if (configuration.account_id !== WHOP_ACCOUNT_ID || !/^ch_[A-Za-z0-9]+$/.test(configuration.id)) {
+          if (configuration.account_id !== whopAccountId || !/^ch_[A-Za-z0-9]+$/.test(configuration.id)) {
             throw new Error('Invalid checkout configuration')
           }
           return Response.json({ configurationId: configuration.id }, { headers })

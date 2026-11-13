@@ -2,10 +2,16 @@ import { useEffect, useState } from 'react'
 import { loadWhop } from '@whop/elements'
 import { Checkout, CheckoutElement, WhopElements } from '@whop/elements-react'
 import { demoPlans, legacyGutterPlan } from '../demo-config'
+import { whopEnvironment } from '../whop-environment'
 
 const plans = {
   repair: demoPlans.tuneUp,
-  replacement: { name: 'Roof replacement', id: import.meta.env.VITE_WHOP_ROOF_REPLACEMENT_PLAN_ID },
+  replacement: {
+    name: 'Roof replacement',
+    id: whopEnvironment === 'sandbox'
+      ? import.meta.env.VITE_WHOP_SANDBOX_ROOF_REPLACEMENT_PLAN_ID
+      : import.meta.env.VITE_WHOP_ROOF_REPLACEMENT_PLAN_ID,
+  },
   inspection: demoPlans.inspection,
   deposit: demoPlans.deposit,
   gutterCleaning: legacyGutterPlan,
@@ -49,7 +55,7 @@ export function ServiceCheckout({ service = 'inspection', configurationId }: { s
     </>}
     {paymentId ? <p role="status">Payment confirmed by Whop. Payment reference: {paymentId}</p> :
       typeof plan.id === 'string' && /^plan_[A-Za-z0-9]+$/.test(plan.id) ? (
-        <WhopElements elements={whopElements}>
+        <WhopElements elements={whopElements} environment={whopEnvironment}>
           <Checkout {...(configurationId ? { checkoutConfiguration: configurationId } : { plan: plan.id })}
             appearance={{ classes: {
               'whop-CheckoutLayout': { flexDirection: 'column', width: '100%', minWidth: '0px' },

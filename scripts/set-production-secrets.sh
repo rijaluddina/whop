@@ -18,7 +18,7 @@
 # Values can also be passed as environment variables, e.g.
 #   WHOP_CLIENT_SECRET=... WHOP_WEBHOOK_SECRET=... bash scripts/set-production-secrets.sh
 #
-# OWNER_DASHBOARD_PASSWORD and OWNER_ROUTE_SLUG come from .dev.thrive.local.
+# OWNER_DASHBOARD_USERNAME, OWNER_DASHBOARD_PASSWORD and OWNER_ROUTE_SLUG come from .dev.thrive.local.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -45,12 +45,14 @@ done
 read_dev_var() { grep -E "^$1=" .dev.thrive.local | head -1 | cut -d= -f2-; }
 
 OWNER_DASHBOARD_PASSWORD=$(read_dev_var OWNER_DASHBOARD_PASSWORD)
+OWNER_DASHBOARD_USERNAME=$(read_dev_var OWNER_DASHBOARD_USERNAME)
 OWNER_ROUTE_SLUG=$(read_dev_var OWNER_ROUTE_SLUG)
 
-for required in OWNER_DASHBOARD_PASSWORD OWNER_ROUTE_SLUG; do
+for required in OWNER_DASHBOARD_USERNAME OWNER_DASHBOARD_PASSWORD OWNER_ROUTE_SLUG; do
   [[ -n ${!required} ]] || { echo "Missing $required in .dev.thrive.local." >&2; exit 1; }
 done
 (( ${#OWNER_DASHBOARD_PASSWORD} >= 32 )) || { echo 'OWNER_DASHBOARD_PASSWORD must be at least 32 characters.' >&2; exit 1; }
+(( ${#OWNER_DASHBOARD_USERNAME} <= 128 )) || { echo 'OWNER_DASHBOARD_USERNAME must not exceed 128 characters.' >&2; exit 1; }
 
 WHOP_CLIENT_ID=$(node -p "require('./whop.app.json').app_id")
 # Reuse the session secret across runs so operator sessions survive a re-run.
@@ -73,6 +75,7 @@ pnpm exec whop apps secrets set \
   --secret "RESEND_API_KEY=$RESEND_API_KEY" \
   --secret "ESTIMATE_EMAIL_FROM=$ESTIMATE_EMAIL_FROM" \
   --secret "OWNER_DASHBOARD_PASSWORD=$OWNER_DASHBOARD_PASSWORD" \
+  --secret "OWNER_DASHBOARD_USERNAME=$OWNER_DASHBOARD_USERNAME" \
   --secret "OWNER_ROUTE_SLUG=$OWNER_ROUTE_SLUG" \
   --secret "WHOP_PIXEL_HOSTNAME=$WHOP_PIXEL_HOSTNAME"
 

@@ -15,6 +15,8 @@ import { Route as OwnerRouteImport } from './routes/$owner'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as OwnerInvoiceRouteImport } from './routes/$owner.invoice'
 import { Route as OwnerLeadsRouteImport } from './routes/$owner.leads'
+import { Route as OwnerLoginRouteImport } from './routes/$owner.login'
+import { Route as OwnerLogoutRouteImport } from './routes/$owner.logout'
 import { Route as OwnerPixelRouteImport } from './routes/$owner.pixel'
 import { Route as ApiDepositSetupRouteImport } from './routes/api.deposit-setup'
 import { Route as ApiEstimateRouteImport } from './routes/api.estimate'
@@ -51,6 +53,16 @@ const OwnerInvoiceRoute = OwnerInvoiceRouteImport.update({
 const OwnerLeadsRoute = OwnerLeadsRouteImport.update({
   id: '/leads',
   path: '/leads',
+  getParentRoute: () => OwnerRoute,
+} as any)
+const OwnerLoginRoute = OwnerLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => OwnerRoute,
+} as any)
+const OwnerLogoutRoute = OwnerLogoutRouteImport.update({
+  id: '/logout',
+  path: '/logout',
   getParentRoute: () => OwnerRoute,
 } as any)
 const OwnerPixelRoute = OwnerPixelRouteImport.update({
@@ -96,6 +108,8 @@ export interface FileRoutesByFullPath {
   '/checkout': typeof CheckoutRoute
   '/$owner/invoice': typeof OwnerInvoiceRoute
   '/$owner/leads': typeof OwnerLeadsRoute
+  '/$owner/login': typeof OwnerLoginRoute
+  '/$owner/logout': typeof OwnerLogoutRoute
   '/$owner/pixel': typeof OwnerPixelRoute
   '/api/deposit-setup': typeof ApiDepositSetupRoute
   '/api/estimate': typeof ApiEstimateRoute
@@ -111,6 +125,8 @@ export interface FileRoutesByTo {
   '/checkout': typeof CheckoutRoute
   '/$owner/invoice': typeof OwnerInvoiceRoute
   '/$owner/leads': typeof OwnerLeadsRoute
+  '/$owner/login': typeof OwnerLoginRoute
+  '/$owner/logout': typeof OwnerLogoutRoute
   '/$owner/pixel': typeof OwnerPixelRoute
   '/api/deposit-setup': typeof ApiDepositSetupRoute
   '/api/estimate': typeof ApiEstimateRoute
@@ -127,6 +143,8 @@ export interface FileRoutesById {
   '/checkout': typeof CheckoutRoute
   '/$owner/invoice': typeof OwnerInvoiceRoute
   '/$owner/leads': typeof OwnerLeadsRoute
+  '/$owner/login': typeof OwnerLoginRoute
+  '/$owner/logout': typeof OwnerLogoutRoute
   '/$owner/pixel': typeof OwnerPixelRoute
   '/api/deposit-setup': typeof ApiDepositSetupRoute
   '/api/estimate': typeof ApiEstimateRoute
@@ -144,6 +162,8 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/$owner/invoice'
     | '/$owner/leads'
+    | '/$owner/login'
+    | '/$owner/logout'
     | '/$owner/pixel'
     | '/api/deposit-setup'
     | '/api/estimate'
@@ -159,6 +179,8 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/$owner/invoice'
     | '/$owner/leads'
+    | '/$owner/login'
+    | '/$owner/logout'
     | '/$owner/pixel'
     | '/api/deposit-setup'
     | '/api/estimate'
@@ -174,6 +196,8 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/$owner/invoice'
     | '/$owner/leads'
+    | '/$owner/login'
+    | '/$owner/logout'
     | '/$owner/pixel'
     | '/api/deposit-setup'
     | '/api/estimate'
@@ -240,6 +264,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OwnerLeadsRouteImport
       parentRoute: typeof OwnerRoute
     }
+    '/$owner/login': {
+      id: '/$owner/login'
+      path: '/login'
+      fullPath: '/$owner/login'
+      preLoaderRoute: typeof OwnerLoginRouteImport
+      parentRoute: typeof OwnerRoute
+    }
+    '/$owner/logout': {
+      id: '/$owner/logout'
+      path: '/logout'
+      fullPath: '/$owner/logout'
+      preLoaderRoute: typeof OwnerLogoutRouteImport
+      parentRoute: typeof OwnerRoute
+    }
     '/$owner/pixel': {
       id: '/$owner/pixel'
       path: '/pixel'
@@ -295,12 +333,16 @@ declare module '@tanstack/react-router' {
 interface OwnerRouteChildren {
   OwnerInvoiceRoute: typeof OwnerInvoiceRoute
   OwnerLeadsRoute: typeof OwnerLeadsRoute
+  OwnerLoginRoute: typeof OwnerLoginRoute
+  OwnerLogoutRoute: typeof OwnerLogoutRoute
   OwnerPixelRoute: typeof OwnerPixelRoute
 }
 
 const OwnerRouteChildren: OwnerRouteChildren = {
   OwnerInvoiceRoute: OwnerInvoiceRoute,
   OwnerLeadsRoute: OwnerLeadsRoute,
+  OwnerLoginRoute: OwnerLoginRoute,
+  OwnerLogoutRoute: OwnerLogoutRoute,
   OwnerPixelRoute: OwnerPixelRoute,
 }
 

@@ -3,6 +3,7 @@ import { estimateServices, roofAges } from '../demo-config'
 import { createEstimateLead } from '../server/estimate-lead'
 import { getWhopUserId } from '../server/whop-auth'
 import { sendEstimateConfirmation } from '../server/estimate-email'
+import { whopAccountId } from '../server/whop-api'
 
 export const Route = createFileRoute('/api/estimate')({
   server: {
@@ -35,11 +36,10 @@ export const Route = createFileRoute('/api/estimate')({
           (insuranceClaim !== undefined && insuranceClaim !== 'yes')
         ) return new Response(null, { status: 400 })
 
-        const { WHOP_ACCOUNT_ID } = process.env
-        if (!WHOP_ACCOUNT_ID) return new Response(null, { status: 503 })
+        if (!whopAccountId) return new Response(null, { status: 503 })
 
         try {
-          const leadId = await createEstimateLead(WHOP_ACCOUNT_ID, userId, {
+          const leadId = await createEstimateLead(whopAccountId, userId, {
             source: 'roofing_estimate',
             name: name.trim(),
             email: email.trim(),

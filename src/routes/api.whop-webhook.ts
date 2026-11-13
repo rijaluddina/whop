@@ -1,11 +1,12 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { verifyWhopWebhook } from '../server/whop-webhook'
+import { whopWebhookSecret } from '../server/whop-api'
 
 export const Route = createFileRoute('/api/whop-webhook')({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const secret = process.env.WHOP_WEBHOOK_SECRET
+        const secret = whopWebhookSecret
         if (!secret) return new Response(null, { status: 503 })
         const body = new Uint8Array(await request.arrayBuffer())
         if (!verifyWhopWebhook(request.headers, body, secret)) return new Response(null, { status: 401 })

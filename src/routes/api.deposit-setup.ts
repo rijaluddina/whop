@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { findSavedProjectMethod } from '../server/deposit-setup'
-import { whopApiBase, whopApiHeaders } from '../server/whop-api'
+import { whopAccountId, whopApiBase, whopApiHeaders } from '../server/whop-api'
 import { getWhopUserId } from '../server/whop-auth'
 
 export const Route = createFileRoute('/api/deposit-setup')({
@@ -12,10 +12,9 @@ export const Route = createFileRoute('/api/deposit-setup')({
         if (!userId) return new Response(null, { status: 401, headers })
         const id = new URL(request.url).searchParams.get('id')
         if (!id || !/^sint_[A-Za-z0-9]+$/.test(id)) return new Response(null, { status: 400, headers })
-        const { WHOP_ACCOUNT_ID } = process.env
-        if (!WHOP_ACCOUNT_ID) return new Response(null, { status: 503, headers })
+        if (!whopAccountId) return new Response(null, { status: 503, headers })
         try {
-          const setup = await findSavedProjectMethod(id, WHOP_ACCOUNT_ID)
+          const setup = await findSavedProjectMethod(id, whopAccountId)
           return Response.json({ saved: setup?.userId === userId }, { headers })
         } catch {
           return new Response(null, { status: 502, headers })
@@ -35,8 +34,8 @@ export const Route = createFileRoute('/api/deposit-setup')({
           return new Response('Enter the project reference and confirm your consent.', { status: 400 })
         }
 
-        const { WHOP_ACCOUNT_ID, WHOP_REDIRECT_URI } = process.env
-        if (!WHOP_ACCOUNT_ID || !WHOP_REDIRECT_URI) return new Response(null, { status: 503 })
+        const { WHOP_REDIRECT_URI } = process.env
+        if (!whopAccountId || !WHOP_REDIRECT_URI) return new Response(null, { status: 503 })
         const returnUrl = new URL('/checkout?setup=returned', WHOP_REDIRECT_URI)
         if (returnUrl.protocol !== 'https:') return new Response('Payment setup requires HTTPS.', { status: 503 })
 
@@ -45,7 +44,7 @@ export const Route = createFileRoute('/api/deposit-setup')({
             method: 'POST',
             headers: whopApiHeaders({ 'Content-Type': 'application/json' }),
             body: JSON.stringify({
-              account_id: WHOP_ACCOUNT_ID,
+              account_id: whopAccountId,
               mode: 'setup',
               redirect_url: returnUrl.href,
               metadata: {

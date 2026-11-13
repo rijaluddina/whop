@@ -1,8 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { ownerPage } from '../server/owner-page'
-import { getOwnerAccess, whopOwnerRequest } from '../server/whop-owner'
+import { getOwnerAccess, ownerLoginRedirect, whopOwnerRequest } from '../server/whop-owner'
 
-const title = 'Whop pixel events'
+const title = 'Pixel'
 
 type PixelEvent = {
   id: string
@@ -28,7 +28,7 @@ export const Route = createFileRoute('/$owner/pixel')({
       GET: async ({ params, request }) => {
         const access = await getOwnerAccess(params.owner, request)
         if (access.status === 404) return Response.redirect(new URL('/', request.url), 302)
-        if (access.status === 401) return ownerPage(title, <p>Owner dashboard credentials are required.</p>, 401)
+        if (access.status === 401) return ownerLoginRedirect(params.owner, request)
         if (access.status === 403) return ownerPage(title, <p>This page is restricted to the account owner.</p>, 403)
         if (access.status !== 200) return ownerPage(title, <p>Pixel events are unavailable.</p>, access.status)
 
@@ -47,10 +47,13 @@ export const Route = createFileRoute('/$owner/pixel')({
 
         try {
           const result = await whopOwnerRequest(`/events?${query}`)
-          const events: PixelEvent[] = result.data
+          const events: PixelEvent[] = result.data.filter((event: PixelEvent) =>
+            ['estimate_requested', 'service_viewed', 'deposit_started'].includes(event.custom_name || event.event_name) ||
+            event.event_name === 'pixel.page' || event.event_name.includes('checkout') || event.event_name === 'payment.completed'
+          )
           return ownerPage(title, <>
-            <p className="panel">Account events from the past seven days, including page views, checkout activity, and custom events. Missing fields are shown as —.</p>
-            {events.length === 0 ? <p className="empty">Whop returned no matching events.</p> : <div className="table-wrap"><table>
+            <p className="panel">Events from the past seven days: estimate_requested, service_viewed, deposit_started, page views, and checkout activity. Missing fields are shown as —.</p>
+            {events.length === 0 ? <p className="empty">No matching events on this page. Check older events if available.</p> : <div className="table-wrap"><table>
               <thead><tr><th scope="col">Event / ID</th><th scope="col">Person</th><th scope="col">Page / URL</th><th scope="col">Source / referrer</th><th scope="col">Location</th><th scope="col">Product</th><th scope="col">Amount</th><th scope="col">Time (UTC)</th></tr></thead>
               <tbody>{events.map(event => <tr key={event.id}>
                 <th scope="row">{event.custom_name || event.event_name}{event.custom_name && <><br /><small>{event.event_name}</small></>}<br /><small>{event.event_id || event.id}</small></th>
